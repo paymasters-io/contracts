@@ -9,7 +9,7 @@
 
 <div align="center">
 
-![GitHub Workflow Status](https://img.shields.io/github/actions/workflow/status/sayajin-labs/kakarot/test.yml)
+![GitHub Workflow Status](https://img.shields.io/github/actions/workflow/status/paymasters-io/contracts/makefile.yml)
 ![GitHub](https://img.shields.io/github/license/paymasters-io/contracts?logo=github)
 ![GitHub contributors](https://img.shields.io/github/contributors/paymasters-io/contracts?logo=github)
 ![GitHub top language](https://img.shields.io/github/languages/top/paymasters-io/contracts)

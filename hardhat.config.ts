@@ -1,6 +1,7 @@
 import "@matterlabs/hardhat-zksync-toolbox"
 import fs from "fs"
 import "hardhat-preprocessor"
+import { HardhatUserConfig } from "hardhat/config";
 
 function getRemappings() {
     return fs
@@ -10,15 +11,16 @@ function getRemappings() {
         .map((line) => line.trim().split("="))
 }
 
-module.exports = {
+const config: HardhatUserConfig = {
     zksolc: {
-        version: "1.2.2",
+        version: "1.3.5",
         compilerSource: "binary", // binary or docker
         settings: {
             experimental: {
                 dockerImage: "matterlabs/zksolc", // required for compilerSource: "docker"
                 tag: "latest", // required for compilerSource: "docker"
             },
+            isSystem: true
         },
     },
     defaultNetwork: "hardhat",
@@ -33,7 +35,13 @@ module.exports = {
         },
     },
     solidity: {
-        version: "0.8.13",
+        version: "0.8.15",
+        settings: {
+            optimizer: {
+                enabled: true,
+                runs: 200,
+            },
+        },
     },
     paths: {
         sources: "./src",
@@ -55,3 +63,6 @@ module.exports = {
         }),
     },
 }
+
+
+export default config;

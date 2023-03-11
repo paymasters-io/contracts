@@ -4,18 +4,21 @@ pragma solidity 0.8.15;
 import "@chainlink/contracts/src/v0.8/interfaces/AggregatorV3Interface.sol";
 
 /**
- * Network: goerli : future zksync
+ * Network: zksync
  * Base: Expected/USD
  * Base Address: 0x...
- * Quote: Eth/USD
+ * Quote: zkEth/USD
  * Quote Address: 0x...
  * Decimals: 8
- * Output: Expected/Eth
+ * Output: Expected/zkEth
  */
 
 contract PriceFeedConsumer {
-    //address private _quote = 0xA39434A63A52E749F02807ae27335515BA4b07F7; // to be replaced
-    address internal _quotePriceFeed; // to be set later
+    address private _quotePriceFeed; 
+
+    constructor (address priceFeed) {
+        _quotePriceFeed = priceFeed;
+    }
 
     function getDerivedPrice(
         address _base,
@@ -45,5 +48,9 @@ contract PriceFeedConsumer {
             return _price / int256(10 ** uint256(_priceDecimals - _decimals));
         }
         return _price;
+    }
+
+    function getQuotePriceFeed() external view returns(address){
+        return _quotePriceFeed;
     }
 }

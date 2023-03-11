@@ -1,14 +1,14 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.15;
 
-import {IPaymaster, ExecutionResult} from "@matterlabs/zksync-contracts/l2/system-contracts/interfaces/IPaymaster.sol";
+import {IPaymaster, ExecutionResult, PAYMASTER_VALIDATION_SUCCESS_MAGIC} from "@matterlabs/zksync-contracts/l2/system-contracts/interfaces/IPaymaster.sol";
 import {IPaymasterFlow} from "@matterlabs/zksync-contracts/l2/system-contracts/interfaces/IPaymasterFlow.sol";
-import {TransactionHelper, Transaction} from "@matterlabs/zksync-contracts/l2/system-contracts/TransactionHelper.sol";
+import {TransactionHelper, Transaction} from "@matterlabs/zksync-contracts/l2/system-contracts/libraries/TransactionHelper.sol";
 
 import "@matterlabs/zksync-contracts/l2/system-contracts/Constants.sol";
 
 /// @title ZkSync Base Paymaster Implementation
-/// @author matterlabs
+/// @author peter anyaogu
 abstract contract Base {
     modifier onlyBootloader() {
         require(msg.sender == BOOTLOADER_FORMAL_ADDRESS, "Only bootloader can call this method");
@@ -22,7 +22,7 @@ abstract contract Base {
         bytes32,
         bytes32,
         Transaction calldata _transaction
-    ) external payable virtual returns (bytes memory context);
+    ) external payable virtual returns (bytes4 magic, bytes memory context);
 
     /// @dev - internal function for charging tx cost from paymaster
     // can be extended by Overrides
@@ -38,7 +38,7 @@ abstract contract Base {
         bytes32 _txHash,
         bytes32 _suggestedSignedHash,
         ExecutionResult _txResult,
-        uint256 _maxRefundedErgs
+        uint256 _maxRefundedGas
     ) external payable onlyBootloader {}
 
     receive() external payable virtual {}

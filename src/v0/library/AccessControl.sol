@@ -3,11 +3,11 @@ pragma solidity 0.8.15;
 
 import "@matterlabs/zksync-contracts/l2/system-contracts/Constants.sol";
 
-/// @title Paymastrers Access Control Library
+/// @title Paymasters Access Control Library
 /// @author peter Anyaogu
 /// @notice used for access control logic in the IxPaymasterV0 contracts
 library AccessControl {
-    /// @dev restricts paymaster to users whoose nonce is under specific value.
+    /// @dev restricts paymaster to users whose nonce is under specific value.
     /// @param value - the maximum nonce accepted by the paymaster contract
     /// @param from - the address of the tx sender
     /// @return  - true / false
@@ -16,7 +16,7 @@ library AccessControl {
         return !_externalCall(payload, address(NONCE_HOLDER_SYSTEM_CONTRACT), value);
     }
 
-    /// @dev restricts paymaster to users who are hodling a specific amount of ERC20 token.
+    /// @dev restricts paymaster to users who are holding a specific amount of ERC20 token.
     /// @param erc20Contract - the ERC20 token contract address
     /// @param value - the the amount of tokens the user is expected to hold.
     /// @param from - the address of the tx sender
@@ -30,19 +30,19 @@ library AccessControl {
         return _externalCall(payload, erc20Contract, value);
     }
 
-    /// @dev restricts paymaster to users who are hodling at an NFT.
+    /// @dev restricts paymaster to users who are holding at an NFT.
     /// @param nftContract - the NFT contract address
     /// @param from - the address of the tx sender
     /// @return  - true / false
     function useNFTGate(address nftContract, address from) internal returns (bool) {
-        // payload only surport erc721 only
+        // payload only support erc721 only
         bytes memory payload = abi.encodeWithSignature("balanceOf(address)", from);
         return _externalCall(payload, nftContract, 1);
     }
 
     /// @dev restricts paymaster to users who are interacting with specific contracts.
     /// @param to - the destination contract address for the transaction.
-    /// @param allowedDestinations - the addresse(s) of the accepted destination contracts
+    /// @param allowedDestinations - the address(s) of the accepted destination contracts
     /// @return  - true / false
     function useStrictDestination(
         address to,

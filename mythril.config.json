@@ -2,7 +2,9 @@
     "remappings": [
         "ds-test/=lib/ds-test/src/",
         "forge-std/=lib/forge-std/src/",
-        "@openzeppelin/=lib/openzeppelin-contracts/"
+        "@chainlink/=lib/chainlink-brownie-contracts/",
+        "@openzeppelin/=lib/openzeppelin-contracts/",
+        "@matterlabs/=node_modules/@matterlabs/"
     ],
     "optimizer": {
         "enabled": true,

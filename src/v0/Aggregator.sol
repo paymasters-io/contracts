@@ -15,20 +15,14 @@ contract AggregatorV0 is ISmod {
         address paymasterAddr,
         bytes memory metadata
     ) external onlyPaymasters(paymasterAddr) {
-        // updates paymaster owner.
         ownerToPaymasters[owner].push(paymasters.length);
-        // updates paymaster storage.
         paymasters.push(PaymasterMeta({contractAddress: paymasterAddr, metadata: metadata}));
-        // emits new event
         emit NewPaymster(paymasterAddr);
     }
 
     function update(address paymasterAddr, bytes memory metadata) external {
-        // get owners paymasters
         uint256[] memory ownedPaymasters = ownerToPaymasters[msg.sender];
-        // loop through owners paymasters
         for (uint256 i = 0; i < ownedPaymasters.length; i++) {
-            // if the paymaster address is same as this one update it.
             if (paymasters[ownedPaymasters[i]].contractAddress == paymasterAddr) {
                 paymasters[ownedPaymasters[i]].metadata = metadata;
             }
@@ -36,11 +30,8 @@ contract AggregatorV0 is ISmod {
     }
 
     function remove(address paymasterAddr) external {
-        // get owners paymasters
         uint256[] memory ownedPaymasters = ownerToPaymasters[msg.sender];
-        // loop through owners paymasters
         for (uint256 i = 0; i < ownedPaymasters.length; i++) {
-            // if the paymaster address is same as this one remove it.
             if (paymasters[ownedPaymasters[i]].contractAddress == paymasterAddr) {
                 paymasters[ownedPaymasters[i]] = paymasters[paymasters.length - 1];
                 paymasters.pop();
@@ -49,7 +40,6 @@ contract AggregatorV0 is ISmod {
     }
 
     function get(address owner) external view returns (PaymasterMeta[] memory) {
-        // get owners paymasters
         uint256[] memory ownedPaymasters = ownerToPaymasters[owner];
         PaymasterMeta[] memory all = new PaymasterMeta[](ownedPaymasters.length);
 

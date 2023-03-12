@@ -14,12 +14,12 @@ contract PayamsterRebatesMiddleware is PaymasterGasless {
     mapping(address => uint256) private rebateTracker;
 
     constructor(
-        // other params
         bytes memory bafyhash,
         AccessControlSchema memory schema,
-        AccessControlRules memory rules
+        AccessControlRules memory rules,
+        RebateHandler memory rebateParams
     ) PaymasterGasless(bafyhash, schema, rules) {
-        // set other params
+        _rebateParams = rebateParams;
     }
 
     /** @notice this is a simple implementation of a rebates mechanism for Gasless Paymasters.
@@ -69,7 +69,7 @@ contract PayamsterRebatesMiddleware is PaymasterGasless {
         bool isEligible = _eligibleForRebate(transactionValue, txFrom);
         if (isEligible) {
             uint256 amount = (_rebateParams.rebatePercentage * transactionValue) / 100;
-            rebateTracker[txFrom] + 1;
+            rebateTracker[txFrom] += 1;
             HelperFuncs.handleTokenTransfer(
                 _rebateParams.dispatcher,
                 txFrom,
@@ -83,11 +83,10 @@ contract PayamsterRebatesMiddleware is PaymasterGasless {
     /// @param txValue - the value passed with the transaction
     /// @param txFrom - the sender of this transaction
     /// @return eligible - true / false
-    function _eligibleForRebate(uint256 txValue, address txFrom)
-        internal
-        view
-        returns (bool eligible)
-    {
+    function _eligibleForRebate(
+        uint256 txValue,
+        address txFrom
+    ) internal view returns (bool eligible) {
         eligible = rebateTracker[txFrom] < _rebateParams.maxNumberOfRebates;
 
         eligible = eligible && txValue >= _rebateParams.rebateTrigger;

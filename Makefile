@@ -2,7 +2,7 @@
 
 .PHONY: all test clean deploy-anvil
 
-all: clean remove install build
+all: yarn clean remove install build
 
 # Clean the repo
 clean  :; forge clean
@@ -10,22 +10,24 @@ clean  :; forge clean
 # Remove modules
 remove :; rm -rf lib && rm -rf .git/modules/*
 
-install :; forge install smartcontractkit/chainlink-brownie-contracts foundry-rs/forge-std openzeppelin/openzeppelin-contracts --no-commit
+install :; forge install smartcontractkit/chainlink-brownie-contracts foundry-rs/forge-std openzeppelin/openzeppelin-contracts redstone-finance/redstone-oracles-monorepo omurovec/foundry-zksync-era --no-commit
+
+yarn :; yarn
 
 # Update Dependencies
 update:; forge update
 
-build:; forge build --via-ir
+build:; forge build --via-ir --build-info
 
 test :; forge test 
 
 snapshot :; forge snapshot
 
-slither :; slither .
+slither :; forge clean && make build && slither .
 
 myth :; myth analyze ./src/Base.sol --solc-json mythril.config.json --solv 0.8.15 --max-depth 20
 
-format :; prettier --write src/**/*.sol
+format :; prettier --write src/**/*.sol && prettier --write src/**/**/*.sol
 
 # solhint should be installed globally
 lint :; solhint src/**/*.sol && solhint src/*.sol

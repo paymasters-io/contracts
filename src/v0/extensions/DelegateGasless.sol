@@ -54,15 +54,13 @@ contract PaymasterGaslessDelegationProxy is Base, AccessChecker {
         }
     }
 
+    //? audit and test required!
     // according to delegateCall [address(this), msg.sender, msg.value]
     // will remain the same throughout the context of the implementation contract
     // so msg.sender will still be the bootloader
     // this may only be called in the implementation
     // unless zkSync Bootloader becomes malicious.
-    function delegate(bool used, uint256 txCost) external onlyBootloader {
-        require(!used, "cannot pay for gas");
-
-        //? audit and test required!
+    function delegate(uint256 txCost) external onlyBootloader {
         //! payable(address).call{} ? will this happen in the context of:
         //! execution contract or implementation contract?
         _chargeContractForTx(txCost);
@@ -74,10 +72,8 @@ contract PaymasterGaslessDelegationProxy is Base, AccessChecker {
         if (_self.balance > txCost) {
             _chargeContractForTx(txCost);
         } else {
-            bytes4 selector = this.delegate.selector;
-
             (, bytes memory data) = sister.delegatecall(
-                abi.encodeWithSelector(selector, true, txCost)
+                abi.encodeWithSelector(this.delegate.selector, txCost)
             );
         }
     }

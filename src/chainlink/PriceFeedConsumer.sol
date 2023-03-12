@@ -14,17 +14,32 @@ import "@chainlink/contracts/src/v0.8/interfaces/AggregatorV3Interface.sol";
  */
 
 contract PriceFeedConsumer {
-    address private _quotePriceFeed; 
+    address private _quotePriceFeed;
 
-    constructor (address priceFeed) {
+    constructor(address priceFeed) {
         _quotePriceFeed = priceFeed;
     }
 
+    // public view method accepting custom quote
     function getDerivedPrice(
         address _base,
         address _quote,
         int256 amount
     ) public view returns (int256) {
+        return _getDerivedPrice(_base, _quote, amount);
+    }
+
+    // actual derivation method using the immutable quote
+    function getDerivedPrice(address _base, int256 amount) external view returns (int256) {
+        return _getDerivedPrice(_base, _quotePriceFeed, amount);
+    }
+
+    // internal method that does the actual derivation
+    function _getDerivedPrice(
+        address _base,
+        address _quote,
+        int256 amount
+    ) internal view returns (int256) {
         (, int256 basePrice, , , ) = AggregatorV3Interface(_base).latestRoundData();
         uint8 baseDecimals = AggregatorV3Interface(_base).decimals();
 
@@ -50,7 +65,7 @@ contract PriceFeedConsumer {
         return _price;
     }
 
-    function getQuotePriceFeed() external view returns(address){
+    function getQuotePriceFeed() external view returns (address) {
         return _quotePriceFeed;
     }
 }

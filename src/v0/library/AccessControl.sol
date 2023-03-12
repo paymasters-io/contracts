@@ -11,7 +11,7 @@ library AccessControl {
     /// @param value - the maximum nonce accepted by the paymaster contract
     /// @param from - the address of the tx sender
     /// @return  - true / false
-    function useMaxNonce(uint256 value, address from) internal returns (bool) {
+    function useMaxNonce(uint256 value, address from) public view returns (bool) {
         bytes memory payload = abi.encodeWithSignature("getMinNonce(address)", from);
         return !_externalCall(payload, address(NONCE_HOLDER_SYSTEM_CONTRACT), value);
     }
@@ -25,7 +25,7 @@ library AccessControl {
         address erc20Contract,
         uint256 value,
         address from
-    ) internal returns (bool) {
+    ) public view returns (bool) {
         bytes memory payload = abi.encodeWithSignature("balanceOf(address)", from);
         return _externalCall(payload, erc20Contract, value);
     }
@@ -34,7 +34,7 @@ library AccessControl {
     /// @param nftContract - the NFT contract address
     /// @param from - the address of the tx sender
     /// @return  - true / false
-    function useNFTGate(address nftContract, address from) internal returns (bool) {
+    function useNFTGate(address nftContract, address from) public view returns (bool) {
         // payload only support erc721 only
         bytes memory payload = abi.encodeWithSignature("balanceOf(address)", from);
         return _externalCall(payload, nftContract, 1);
@@ -47,7 +47,7 @@ library AccessControl {
     function useStrictDestination(
         address to,
         address[] memory allowedDestinations
-    ) internal pure returns (bool) {
+    ) public pure returns (bool) {
         for (uint256 i = 0; i < allowedDestinations.length; i++) {
             if (to == allowedDestinations[i]) return true;
         }
@@ -63,8 +63,8 @@ library AccessControl {
         bytes memory _payload,
         address _to,
         uint256 _value
-    ) private returns (bool) {
-        (bool success, bytes memory returnData) = address(_to).call(_payload);
+    ) private view returns (bool) {
+        (bool success, bytes memory returnData) = address(_to).staticcall(_payload);
         if (success) {
             uint256 decoded = abi.decode(returnData, (uint256));
             return decoded >= _value ? true : false;

@@ -62,12 +62,7 @@ contract PaymasterOracleEnabled is PaymasterERC20 {
     /// @param txCost -  the cost of this tx in wei
     /// @return - the cost of this tx in ERC20 denominated in wei
     function _processOracleRequest(uint256 txCost) internal view returns (uint256) {
-        int256 fee = _oracle.getDerivedPrice(
-            _flow.priceFeed,
-            // you can set own pricefeed
-            _oracle.getQuotePriceFeed(),
-            int256(txCost)
-        );
+        int256 fee = _oracle.getDerivedPrice(_flow.priceFeed, int256(txCost));
         return uint256(fee);
     }
 

@@ -1,19 +1,18 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.15;
 
-import "@matterlabs/zksync-contracts/l2/system-contracts/Constants.sol";
+import {TriggerSchema} from "../utils/Structs.sol";
 
 /// @title Paymasters Access Control Library
 /// @author peter Anyaogu
-/// @notice used for access control logic in the IxPaymasterV0 contracts
+/// @notice used for access control logic in the Paymasters contracts
 library AccessControl {
     /// @dev restricts paymaster to users whose nonce is under specific value.
     /// @param value - the maximum nonce accepted by the paymaster contract
-    /// @param from - the address of the tx sender
+    /// @param current - the nonce passed with the transaction
     /// @return  - true / false
-    function useMaxNonce(uint256 value, address from) public view returns (bool) {
-        bytes memory payload = abi.encodeWithSignature("getMinNonce(address)", from);
-        return !_externalCall(payload, address(NONCE_HOLDER_SYSTEM_CONTRACT), value);
+    function useMaxNonce(uint256 value, uint256 current) public pure returns (bool) {
+        return current <= value;
     }
 
     /// @dev restricts paymaster to users who are holding a specific amount of ERC20 token.
@@ -42,19 +41,62 @@ library AccessControl {
 
     /// @dev restricts paymaster to users who are interacting with specific contracts.
     /// @param to - the destination contract address for the transaction.
-    /// @param allowedDestinations - the address(s) of the accepted destination contracts
     /// @return  - true / false
     function useStrictDestination(
-        address to,
-        address[] memory allowedDestinations
-    ) public pure returns (bool) {
-        for (uint256 i = 0; i < allowedDestinations.length; i++) {
-            if (to == allowedDestinations[i]) return true;
+        TriggerSchema storage self,
+        address to
+    ) public view returns (bool) {
+        for (uint256 i = 0; i < self.strictDestinations.length; i++) {
+            if (to == self.strictDestinations[i]) return true;
         }
         return false;
     }
 
-    /// @dev internal function for handling external calls
+    /// @dev restricts paymasters to users who are depositing value to the contract
+    /// @param txValue - the value sent alongside the transaction
+    /// @return - true/false
+    function useMinValue(TriggerSchema storage self, uint256 txValue) public view returns (bool) {
+        return txValue >= self.minMsgValue;
+    }
+
+    /// @dev restricts paymaster when a particular selector is part of calldata
+    /// @param msgData - msg.data
+    /// @return result - true/false
+    function validSelector(
+        TriggerSchema storage self,
+        bytes memory msgData
+    ) public view returns (bool result) {
+        bytes4 selector;
+        assembly {
+            selector := mload(add(msgData, 32))
+        }
+    }
+
+    /// @dev restricts paymaster when a the transaction calldata has specific input params
+    /// @param msgData - msg.data
+    /// @return - true/false
+    function validSelectorParams(
+        TriggerSchema storage self,
+        bytes memory msgData
+    ) public view returns (bool) {
+        return true;
+    }
+
+    /// @notice function for making the actual external call
+    /// @dev returns the value as-is without comparison
+    /// @param _payload - the the encoded function signature in bytes
+    /// @param _to - the contract address to send external call.
+    /// @return - (uint256)
+    function externalCall(bytes memory _payload, address _to) public view returns (uint256) {
+        (bool success, bytes memory returnData) = address(_to).staticcall(_payload);
+        if (success) {
+            return abi.decode(returnData, (uint256));
+        }
+        revert("external call failed");
+    }
+
+    /// @dev function for handling external calls
+    /// @dev returned value will be compared against the provided value
     /// @param _payload - the the encoded function signature in bytes
     /// @param _to - the contract address to perform external call.
     /// @param _value - value to be compared against the return value from the external call.
@@ -64,11 +106,6 @@ library AccessControl {
         address _to,
         uint256 _value
     ) private view returns (bool) {
-        (bool success, bytes memory returnData) = address(_to).staticcall(_payload);
-        if (success) {
-            uint256 decoded = abi.decode(returnData, (uint256));
-            return decoded >= _value ? true : false;
-        }
-        return false;
+        return externalCall(_payload, _to) >= _value ? true : false;
     }
 }

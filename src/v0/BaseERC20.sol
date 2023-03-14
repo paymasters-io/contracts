@@ -51,15 +51,12 @@ contract PaymasterERC20 is Base, AccessChecker {
                 (address, uint256, bytes)
             );
             address caller = address(uint160(_transaction.from));
-            address receiver = address(uint160(_transaction.to));
 
             if (
-                !_satisfy(caller, receiver) ||
+                !_satisfy(caller, _transaction.nonce) ||
                 token != address(_flow.l2FeeToken) ||
                 minAllowance < _flow.l2FeeAmount
             ) revert OperationFailed("verification failed");
-
-            uint256 txCost = _transaction.gasLimit * _transaction.maxFeePerGas;
 
             HelperFuncs.handleTokenTransfer(
                 caller,
@@ -68,7 +65,7 @@ contract PaymasterERC20 is Base, AccessChecker {
                 _flow.l2FeeToken
             );
 
-            _chargeContractForTx(txCost);
+            TransactionHelper.payToTheBootloader(_transaction);
         } else {
             revert("Unsupported paymaster flow");
         }

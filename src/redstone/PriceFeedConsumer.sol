@@ -49,11 +49,9 @@ contract PriceFeedConsumer is AvalancheDataServiceConsumerBase {
         return getOracleNumericValueFromTxMsg(_quoteFeed);
     }
 
-    function getLatestPricesForManyAssets(bytes32[] memory dataFeedIds)
-        public
-        view
-        returns (uint256[] memory)
-    {
+    function getLatestPricesForManyAssets(
+        bytes32[] memory dataFeedIds
+    ) public view returns (uint256[] memory) {
         return getOracleNumericValuesFromTxMsg(dataFeedIds);
     }
 }

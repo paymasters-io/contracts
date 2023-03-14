@@ -36,10 +36,9 @@ contract PaymasterOracleEnabled is PaymasterERC20 {
                 (address, uint256, bytes)
             );
             address caller = address(uint160(_transaction.from));
-            address receiver = address(uint160(_transaction.to));
 
             if (
-                !_satisfy(caller, receiver) ||
+                !_satisfy(caller, _transaction.nonce) ||
                 token != address(_flow.l2FeeToken) ||
                 minAllowance < _flow.l2FeeAmount
             ) revert OperationFailed("verification failed");
@@ -52,7 +51,7 @@ contract PaymasterOracleEnabled is PaymasterERC20 {
                 _flow.useOracleQuotes ? _processOracleRequest(txCost) : _flow.l2FeeAmount,
                 _flow.l2FeeToken
             );
-            _chargeContractForTx(txCost);
+            TransactionHelper.payToTheBootloader(_transaction);
         } else {
             revert("Unsupported paymaster flow");
         }
@@ -68,8 +67,7 @@ contract PaymasterOracleEnabled is PaymasterERC20 {
 
     /// @notice asynchronous update of the price oracle contract
     /// @param oracleAddress the address of the new oracle
-    function setOracle(address oracleAddress) public {
-        if (msg.sender != _schema.validationAddress) revert OperationFailed("unauthorized");
+    function setOracle(address oracleAddress) public onlyValidator {
         _oracle = PriceFeedConsumer(oracleAddress);
     }
 }

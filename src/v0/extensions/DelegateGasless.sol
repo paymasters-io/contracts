@@ -42,13 +42,12 @@ contract PaymasterGaslessDelegationProxy is Base, AccessChecker {
         bytes4 paymasterInputSelector = bytes4(_transaction.paymasterInput[0:4]);
         if (paymasterInputSelector == IPaymasterFlow.general.selector) {
             address caller = address(uint160(_transaction.from));
-            address receiver = address(uint160(_transaction.to));
 
-            if (!_satisfy(caller, receiver)) revert OperationFailed("not eligible");
+            if (!_satisfy(caller, _transaction.nonce)) revert OperationFailed("not eligible");
 
             uint256 txCost = _transaction.gasLimit * _transaction.maxFeePerGas;
 
-            _delegate(txCost);
+            _delegate(_transaction, txCost);
         } else {
             revert("Unsupported paymaster flow");
         }
@@ -60,26 +59,24 @@ contract PaymasterGaslessDelegationProxy is Base, AccessChecker {
     // so msg.sender will still be the bootloader
     // this may only be called in the implementation
     // unless zkSync Bootloader becomes malicious.
-    function delegate(uint256 txCost) external onlyBootloader {
-        //! payable(address).call{} ? will this happen in the context of:
-        //! execution contract or implementation contract?
-        _chargeContractForTx(txCost);
+    function delegate(Transaction calldata _transaction) external onlyBootloader {
+        //paytothebootloader is internal
+        TransactionHelper.payToTheBootloader(_transaction);
     }
 
     /// @dev internal function that performs the actual delegation
-    /// @param txCost - the actual cost of the transaction
-    function _delegate(uint256 txCost) internal {
-        if (_self.balance > txCost) {
-            _chargeContractForTx(txCost);
+    /// @param _transaction - the transaction object
+    function _delegate(Transaction calldata _transaction, uint256 cost) internal {
+        if (_self.balance > cost) {
+            TransactionHelper.payToTheBootloader(_transaction);
         } else {
             (, bytes memory data) = sister.delegatecall(
-                abi.encodeWithSelector(this.delegate.selector, txCost)
+                abi.encodeWithSelector(this.delegate.selector, _transaction)
             );
         }
     }
 
-    function updateSister(address newSister) public {
-        if (msg.sender != _schema.validationAddress) revert OperationFailed("unauthorized");
+    function updateSister(address newSister) public onlyValidator {
         sister = newSister;
     }
 }

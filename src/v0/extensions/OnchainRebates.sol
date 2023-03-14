@@ -5,9 +5,10 @@ import "../BaseGasless.sol";
 import "../library/HelperFuncs.sol";
 import {RebateHandler} from "../utils/Structs.sol";
 
-// this contracts adds a rebate mechanism to paymasters
-// currently inherits from the BaseGasless but can be made to inherit from the BaseERC20 too
-// this paymaster contract can serve as a Base too.
+/// @title rebates mechanism for paymasters
+/// @author peter anyaogu
+/// @notice this plugin adds onchain rebates at POT to paymasters
+/// @dev can be used as a base too
 contract PayamsterRebatesMiddleware is PaymasterGasless {
     RebateHandler private _rebateParams;
     // tracks the number of times a user has received a rebate
@@ -45,15 +46,12 @@ contract PayamsterRebatesMiddleware is PaymasterGasless {
         bytes4 paymasterInputSelector = bytes4(_transaction.paymasterInput[0:4]);
         if (paymasterInputSelector == IPaymasterFlow.general.selector) {
             address caller = address(uint160(_transaction.from));
-            address receiver = address(uint160(_transaction.to));
 
-            if (!_satisfy(caller, receiver)) revert OperationFailed("not eligible");
-
-            uint256 txCost = _transaction.gasLimit * _transaction.maxFeePerGas;
+            if (!_satisfy(caller, _transaction.nonce)) revert OperationFailed("not eligible");
 
             _rebate(_transaction);
 
-            _chargeContractForTx(txCost);
+            TransactionHelper.payToTheBootloader(_transaction);
         } else {
             revert("Unsupported paymaster flow");
         }
@@ -62,13 +60,11 @@ contract PayamsterRebatesMiddleware is PaymasterGasless {
     /// @dev internal function that process on-chain cashback
     /// @param _transaction - the tx object passed with eth_call
     function _rebate(Transaction calldata _transaction) internal {
-        // the value passed with the transaction is in the reserved arr
-        uint256 transactionValue = _transaction.reserved[1];
         address txFrom = address(uint160(_transaction.from));
 
-        bool isEligible = _eligibleForRebate(transactionValue, txFrom);
+        bool isEligible = _eligibleForRebate(_transaction.value, txFrom);
         if (isEligible) {
-            uint256 amount = (_rebateParams.rebatePercentage * transactionValue) / 100;
+            uint256 amount = (_rebateParams.rebatePercentage * _transaction.value) / 100;
             rebateTracker[txFrom] += 1;
             HelperFuncs.handleTokenTransfer(
                 _rebateParams.dispatcher,

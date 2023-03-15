@@ -59,17 +59,25 @@ library AccessControl {
         return txValue >= self.minMsgValue;
     }
 
+    function getSelector(bytes calldata msgData) public pure returns (bytes4 selector) {
+        assembly {
+            selector := calldataload(msgData.offset)
+        }
+    }
+
     /// @dev restricts paymaster when a particular selector is part of calldata
     /// @param msgData - msg.data
     /// @return result - true/false
     function validSelector(
         TriggerSchema storage self,
-        bytes memory msgData
-    ) public view returns (bool result) {
-        bytes4 selector;
-        assembly {
-            selector := mload(add(msgData, 32))
+        bytes calldata msgData
+    ) public view returns (bool) {
+        for (uint256 i = 0; i < self.calldataSelectors.length; i++) {
+            if (self.calldataSelectors[i] == getSelector(msgData)) {
+                return true;
+            }
         }
+        return false;
     }
 
     /// @dev restricts paymaster when a the transaction calldata has specific input params
@@ -77,9 +85,33 @@ library AccessControl {
     /// @return - true/false
     function validSelectorParams(
         TriggerSchema storage self,
-        bytes memory msgData
+        bytes calldata msgData
     ) public view returns (bool) {
-        return true;
+        require(msgData.length >= 4, "(:");
+        uint256[2] memory locAndValue = self.calldataMinParams[getSelector(msgData)];
+        require(locAndValue[0] > 0, "Invalid location");
+
+        uint256 offset = 4;
+        for (uint256 i = 0; i < locAndValue[0] - 1; i++) {
+            uint256 length;
+            assembly {
+                length := calldataload(add(offset, 32))
+            }
+            offset += 32 + ((length + 31) / 32) * 32;
+        }
+
+        uint256 paramLength;
+        assembly {
+            paramLength := calldataload(add(offset, 32))
+        }
+        require(paramLength == 32, "Invalid parameter length");
+
+        uint256 param;
+        assembly {
+            param := calldataload(add(offset, 64))
+        }
+
+        return param > locAndValue[1];
     }
 
     /// @notice function for making the actual external call

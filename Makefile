@@ -21,7 +21,7 @@ build:; forge build --via-ir --build-info
 
 test :; forge test --via-ir
 
-snapshot :; forge snapshot
+snapshot :; forge snapshot --via-ir
 
 slither :; forge clean && make build && slither .
 

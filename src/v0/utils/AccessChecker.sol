@@ -42,7 +42,7 @@ contract AccessChecker {
     function previewTrigger(
         address txTo,
         uint256 txValue,
-        bytes memory msgData
+        bytes calldata msgData
     ) public payable virtual returns (bool) {
         if (_rules.useTriggers) {
             return _trigger(txTo, txValue, msgData);
@@ -50,18 +50,18 @@ contract AccessChecker {
         return true;
     }
 
+    //### VALIDATOR ONLY FUNCTIONS ###
+
     /// @dev allows a validationAddress to update the trigger schema
     /// @param selector selector to check
     /// @param calldataParam the params of the calldata input
-    function addTriggerSelector(
-        bytes4 selector,
-        uint256[2] memory calldataParam
-    ) public onlyValidator {
+    function addTriggerSelector(bytes4 selector, uint256[2] memory calldataParam)
+        public
+        onlyValidator
+    {
         _tSchema.calldataSelectors.push(selector);
         _tSchema.calldataMinParams[selector] = calldataParam;
     }
-
-    //### VALIDATOR ONLY FUNCTIONS ###
 
     function removeTriggerSelector(uint256 index) public onlyValidator {
         bytes4 selector = _tSchema.calldataSelectors[index];
@@ -77,38 +77,80 @@ contract AccessChecker {
         delete _tSchema.strictDestinations[index];
     }
 
-    function setMinMsgValue(uint256 minMsgValue) public onlyValidator {
-        _tSchema.minMsgValue = minMsgValue;
+    function compare(bytes memory a, bytes memory b) public pure returns (bool) {
+        return keccak256(a) == keccak256(b);
     }
 
-    function updateMaxNonce(uint256 value) public onlyValidator {
-        _schema.maxNonce = value;
+    //###### UPDATES ########
+
+    function updateSchema(bytes memory schema, bytes calldata data) public onlyValidator {
+        if (compare(schema, "maxNonce")) {
+            _schema.maxNonce = abi.decode(data, (uint256));
+        }
+        if (compare(schema, "ERC20GateValue")) {
+            _schema.ERC20GateValue = abi.decode(data, (uint256));
+        }
+        if (compare(schema, "ERC20GateContract")) {
+            _schema.ERC20GateContract = abi.decode(data, (address));
+        }
+        if (compare(schema, "NFTGateContract")) {
+            _schema.NFTGateContract = abi.decode(data, (address));
+        }
+        if (compare(schema, "l2FeeAmount")) {
+            _flow.l2FeeAmount = abi.decode(data, (uint256));
+        }
+        if (compare(schema, "l2FeeToken")) {
+            _flow.l2FeeToken = IERC20(abi.decode(data, (address)));
+        }
+        if (compare(schema, "minMsgValue")) {
+            _tSchema.minMsgValue = abi.decode(data, (uint256));
+        }
     }
 
-    function updateERC20Gate(
-        uint256 ERC20GateValue,
-        address ERC20GateContract
-    ) public onlyValidator {
-        _schema.ERC20GateValue = ERC20GateValue;
-        _schema.ERC20GateContract = ERC20GateContract;
+    //##### TOGGLES ######
+
+    function toggleRule(bytes memory rule) public onlyValidator {
+        if (compare(rule, "useMaxNonce")) {
+            _rules.useMaxNonce = _rules.useMaxNonce ? false : true;
+        }
+        if (compare(rule, "useERC20Gate")) {
+            _rules.useERC20Gate = _rules.useERC20Gate ? false : true;
+        }
+        if (compare(rule, "useNFTGate")) {
+            _rules.useNFTGate = _rules.useNFTGate ? false : true;
+        }
+        if (compare(rule, "useTriggers")) {
+            _rules.useTriggers = _rules.useTriggers ? false : true;
+        }
+        if (compare(rule, "useOracleQuotes")) {
+            _flow.useOracleQuotes = _flow.useOracleQuotes ? false : true;
+        }
     }
 
-    function updateNFTGate(address NFTGateContract) public onlyValidator {
-        _schema.NFTGateContract = NFTGateContract;
-    }
-
-    function updateApprovalBasedToken(uint256 l2FeeAmount, IERC20 l2FeeToken) public onlyValidator {
-        _flow.l2FeeAmount = l2FeeAmount;
-        _flow.l2FeeToken = l2FeeToken;
+    function toggleTriggers(bytes memory trigger) public onlyValidator {
+        if (compare(trigger, "useSelector")) {
+            _tRules.useSelector = _tRules.useSelector ? false : true;
+        }
+        if (compare(trigger, "useSelectorParams")) {
+            _tRules.useSelectorParams ? false : _tRules.useSelector = true;
+            _tRules.useSelectorParams = _tRules.useSelectorParams ? false : true;
+        }
+        if (compare(trigger, "useStrictDestination")) {
+            _tRules.useStrictDestination = _tRules.useStrictDestination ? false : true;
+        }
+        if (compare(trigger, "useMsgValue")) {
+            _tRules.useMsgValue = _tRules.useMsgValue ? false : true;
+        }
     }
 
     /// @dev internal function for access control
     /// @param addressToCheck - to address to satisfy
     /// @return truthy - true / false depending if the user passed all provided checks
-    function _satisfy(
-        address addressToCheck,
-        uint256 providedNonce
-    ) internal virtual returns (bool truthy) {
+    function _satisfy(address addressToCheck, uint256 providedNonce)
+        internal
+        virtual
+        returns (bool truthy)
+    {
         truthy = true; // true & true = true, true & false = false, false & false = false.
         if (_rules.useMaxNonce) {
             truthy = truthy && AccessControl.useMaxNonce(_schema.maxNonce, providedNonce);
@@ -137,7 +179,7 @@ contract AccessChecker {
     function _trigger(
         address txTo,
         uint256 txValue,
-        bytes memory msgData
+        bytes calldata msgData
     ) internal virtual returns (bool triggered) {
         triggered = true; // true & true = true, true & false = false, false & false = false.
         if (_tRules.useStrictDestination) {

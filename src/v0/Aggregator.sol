@@ -4,20 +4,37 @@ pragma solidity 0.8.15;
 import {PaymasterMeta} from "./utils/Structs.sol";
 import "./utils/Modifiers.sol";
 
-contract AggregatorV0 is ISmod {
+import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
+
+contract AggregatorV0 is ISmod, Ownable {
     PaymasterMeta[] private paymasters;
     mapping(address => uint256[]) private ownerToPaymasters;
 
-    event NewPaymster(address contractAddress);
+    event NewPaymster(address paymaster, bytes metadata, address owner);
 
     function save(
         address owner,
         address paymasterAddr,
         bytes memory metadata
-    ) external onlyPaymasters(paymasterAddr) {
+    ) public onlyOwner {
+        _save(owner, paymasterAddr, metadata);
+    }
+
+    function save(address paymasterAddr, bytes memory metadata)
+        external
+        onlyPaymasters(paymasterAddr)
+    {
+        _save(msg.sender, paymasterAddr, metadata);
+    }
+
+    function _save(
+        address owner,
+        address paymasterAddr,
+        bytes memory metadata
+    ) internal {
         ownerToPaymasters[owner].push(paymasters.length);
         paymasters.push(PaymasterMeta({contractAddress: paymasterAddr, metadata: metadata}));
-        emit NewPaymster(paymasterAddr);
+        emit NewPaymster(paymasterAddr, metadata, owner);
     }
 
     function update(address paymasterAddr, bytes memory metadata) external {

@@ -82,36 +82,33 @@ library AccessControl {
 
     /// @dev restricts paymaster when a the transaction calldata has specific input params
     /// @param msgData - msg.data
-    /// @return - true/false
+    /// @return status - true/false
     function validSelectorParams(
         TriggerSchema storage self,
         bytes calldata msgData
-    ) public view returns (bool) {
+    ) public view returns (bool status) {
         require(msgData.length >= 4, "(:");
         uint256[2] memory locAndValue = self.calldataMinParams[getSelector(msgData)];
-        require(locAndValue[0] > 0, "Invalid location");
 
         uint256 offset = 4;
-        for (uint256 i = 0; i < locAndValue[0] - 1; i++) {
+        for (uint256 i = 0; i < locAndValue[0]; i++) {
             uint256 length;
             assembly {
                 length := calldataload(add(offset, 32))
             }
             offset += 32 + ((length + 31) / 32) * 32;
         }
-
-        uint256 paramLength;
+        
         assembly {
-            paramLength := calldataload(add(offset, 32))
+            let paramLength := calldataload(add(offset, 32))
+            if iszero(eq(paramLength, 32)) {
+                let errorMessage := "(:"
+                let messageSize := mload(errorMessage)
+                revert(add(32, errorMessage), messageSize)
+            }
+            let param := calldataload(add(offset, 64))
+            status := gt(param, mload(add(locAndValue, 32)) )
         }
-        require(paramLength == 32, "Invalid parameter length");
-
-        uint256 param;
-        assembly {
-            param := calldataload(add(offset, 64))
-        }
-
-        return param > locAndValue[1];
     }
 
     /// @notice function for making the actual external call

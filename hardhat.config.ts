@@ -1,7 +1,9 @@
 import "@matterlabs/hardhat-zksync-toolbox"
 import fs from "fs"
 import "hardhat-preprocessor"
-import { HardhatUserConfig } from "hardhat/config";
+import {HardhatUserConfig} from "hardhat/config"
+
+require("dotenv").config()
 
 function getRemappings() {
     return fs
@@ -20,7 +22,7 @@ const config: HardhatUserConfig = {
                 dockerImage: "matterlabs/zksolc", // required for compilerSource: "docker"
                 tag: "latest", // required for compilerSource: "docker"
             },
-            isSystem: true
+            isSystem: true,
         },
     },
     defaultNetwork: "hardhat",
@@ -28,10 +30,14 @@ const config: HardhatUserConfig = {
         hardhat: {
             zksync: true, // enables zksync in hardhat local network
         },
+        goerli: {
+            url: process.env.GOERLI_RPC_URL, // URL of the Ethereum Web3 RPC (optional)
+        },
         zkTestnet: {
             url: "https://zksync2-testnet.zksync.dev", // URL of the zkSync network RPC
             ethNetwork: "goerli", // Can also be the RPC URL of the Ethereum network (e.g. `https://goerli.infura.io/v3/<API_KEY>`)
             zksync: true,
+            verifyURL: "https://zksync2-testnet-explorer.zksync.dev/contract_verification",
         },
     },
     solidity: {
@@ -41,6 +47,7 @@ const config: HardhatUserConfig = {
                 enabled: true,
                 runs: 200,
             },
+            viaIR: true,
         },
     },
     paths: {
@@ -64,5 +71,4 @@ const config: HardhatUserConfig = {
     },
 }
 
-
-export default config;
+export default config

@@ -1,0 +1,60 @@
+{
+  "_format": "hh-zksolc-artifact-1",
+  "contractName": "IAccessChecker",
+  "sourceName": "src/v0/interfaces/IAccessChecker.sol",
+  "abi": [
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "user",
+          "type": "address"
+        }
+      ],
+      "name": "previewSatisfy",
+      "outputs": [
+        {
+          "internalType": "bool",
+          "name": "",
+          "type": "bool"
+        }
+      ],
+      "stateMutability": "payable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "txTo",
+          "type": "address"
+        },
+        {
+          "internalType": "uint256",
+          "name": "txValue",
+          "type": "uint256"
+        },
+        {
+          "internalType": "bytes",
+          "name": "msgData",
+          "type": "bytes"
+        }
+      ],
+      "name": "previewTrigger",
+      "outputs": [
+        {
+          "internalType": "bool",
+          "name": "",
+          "type": "bool"
+        }
+      ],
+      "stateMutability": "payable",
+      "type": "function"
+    }
+  ],
+  "bytecode": "0x",
+  "deployedBytecode": "0x",
+  "linkReferences": {},
+  "deployedLinkReferences": {},
+  "factoryDeps": {}
+}

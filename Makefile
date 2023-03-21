@@ -17,11 +17,11 @@ yarn :; yarn
 # Update Dependencies
 update:; forge update
 
-build:; forge build --via-ir --build-info
+build:; forge build --build-info
 
-test :; forge test --via-ir
+test :; forge test
 
-snapshot :; forge snapshot --via-ir
+snapshot :; forge snapshot
 
 slither :; forge clean && make build && slither .
 

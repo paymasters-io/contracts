@@ -81,7 +81,7 @@ contract AccessChecker {
         return keccak256(a) == keccak256(b);
     }
 
-    //###### UPDATES ########
+    //###### UPDATES MULTICALL ########
 
     function updateSchema(bytes memory schema, bytes calldata data) public onlyValidator {
         if (compare(schema, "maxNonce")) {
@@ -107,7 +107,7 @@ contract AccessChecker {
         }
     }
 
-    //##### TOGGLES ######
+    //##### TOGGLES MULTICALL ######
 
     function toggleRule(bytes memory rule) public onlyValidator {
         if (compare(rule, "useMaxNonce")) {

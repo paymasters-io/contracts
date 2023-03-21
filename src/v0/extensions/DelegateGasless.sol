@@ -3,7 +3,6 @@ pragma solidity 0.8.15;
 
 import "../Base.sol";
 import "../library/AccessControl.sol";
-import "../utils/Structs.sol";
 import "../utils/AccessChecker.sol";
 
 // this contract delegates bootloader calls from the current contract to another contract

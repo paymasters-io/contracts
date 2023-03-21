@@ -20,11 +20,8 @@ contract AggregatorV0 is ISmod, Ownable {
         _save(owner, paymasterAddr, metadata);
     }
 
-    function save(address paymasterAddr, bytes memory metadata)
-        external
-        onlyPaymasters(paymasterAddr)
-    {
-        _save(msg.sender, paymasterAddr, metadata);
+    function save(address owner, bytes memory metadata) external onlyPaymasters(msg.sender) {
+        _save(owner, msg.sender, metadata);
     }
 
     function _save(

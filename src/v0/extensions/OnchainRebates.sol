@@ -3,7 +3,6 @@ pragma solidity 0.8.15;
 
 import "../BaseGasless.sol";
 import "../library/HelperFuncs.sol";
-import {RebateHandler} from "../utils/Structs.sol";
 
 /// @title rebates mechanism for paymasters
 /// @author peter anyaogu

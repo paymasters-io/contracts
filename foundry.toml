@@ -6,4 +6,8 @@ gas_reports = ["*"]
 optimizer = true
 optimizer_runs = 200
 solc_version = "0.8.15"
+via_ir = true
 allow_paths = ["node_modules/@matterlabs/"]
+
+# enable make build and hardhat compile to interop
+remappings = ["@matterlabs/=node_modules/@matterlabs/"]

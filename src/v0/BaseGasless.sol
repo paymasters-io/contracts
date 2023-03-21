@@ -4,7 +4,6 @@ pragma solidity 0.8.15;
 import "./Base.sol";
 import "./library/AccessControl.sol";
 import "./utils/AccessChecker.sol";
-import "./utils/Structs.sol";
 
 /// @title General Paymaster Contract with Access Control
 /// @author peter anyaogu

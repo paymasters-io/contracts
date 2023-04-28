@@ -33,9 +33,14 @@ const config: HardhatUserConfig = {
         goerli: {
             url: process.env.GOERLI_RPC_URL, // URL of the Ethereum Web3 RPC (optional)
         },
-        zkTestnet: {
-            url: "https://zksync2-testnet.zksync.dev", // URL of the zkSync network RPC
-            ethNetwork: "goerli", // Can also be the RPC URL of the Ethereum network (e.g. `https://goerli.infura.io/v3/<API_KEY>`)
+        eraLocal: {
+            url: "http://localhost:3050",
+            ethNetwork: "http://localhost:8545",
+            zksync: true,
+        },
+        eraTestnet: {
+            url: "https://testnet.era.zksync.dev",
+            ethNetwork: "goerli", // RPC URL of the network (e.g. `https://goerli.infura.io/v3/<API_KEY>`)
             zksync: true,
             verifyURL: "https://zksync2-testnet-explorer.zksync.dev/contract_verification",
         },

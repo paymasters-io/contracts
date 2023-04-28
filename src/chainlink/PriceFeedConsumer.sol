@@ -45,14 +45,14 @@ contract PriceFeedConsumer {
 
         (, int256 quotePrice, , , ) = AggregatorV3Interface(_quote).latestRoundData();
         uint8 quoteDecimals = AggregatorV3Interface(_quote).decimals();
-        quotePrice = scalePrice(quotePrice, quoteDecimals, baseDecimals);
+        quotePrice = _scalePrice(quotePrice, quoteDecimals, baseDecimals);
 
         // since amount is bignumber, it automatically converts the expected value to bigint.
-        int256 scaledValue = scalePrice(amount, quoteDecimals, baseDecimals);
+        int256 scaledValue = _scalePrice(amount, quoteDecimals, baseDecimals);
         return (scaledValue * quotePrice) / basePrice;
     }
 
-    function scalePrice(
+    function _scalePrice(
         int256 _price,
         uint8 _priceDecimals,
         uint8 _decimals

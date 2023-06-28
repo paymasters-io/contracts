@@ -1,0 +1,30 @@
+{
+    "name": "contracts",
+    "version": "0.0.0",
+    "description": "EIP4337 paymaster contracts",
+    "main": "index.js",
+    "scripts": {
+        "test": "make test",
+        "build": "make build",
+        "compile": "forge compile",
+        "clean": "make clean",
+        "update": "make update",
+        "format": "make format",
+        "slither": "make slither"
+    },
+    "keywords": [
+        "paymaster",
+        "account abstraction",
+        "paymasters",
+        "ERC4337"
+    ],
+    "author": "peter anyaogu",
+    "license": "MIT",
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/paymasters-io/contracts.git"
+    },
+    "bugs": {
+        "url": "https://github.com/paymasters-io/contracts/issues"
+    }
+}

@@ -8,7 +8,7 @@ import "@chainlink/contracts/src/v0.8/interfaces/AggregatorV3Interface.sol";
 
 enum Oracle {
     CHAINLINK,
-    REDSTONE,
+    REDSTONE, // disabled for now
     SUPRAORACLE,
     API3
 }
@@ -29,7 +29,8 @@ library OracleHelper {
         Oracle oracle
     ) public view returns (uint256) {
         if (oracle == Oracle.REDSTONE) {
-            return getDerivedPriceFromRedstone(self.baseProxyOrFeed, self.baseTicker, self.tokenTicker, gasFee);
+            revert("redstone disabled");
+            // return getDerivedPriceFromRedstone(self.baseProxyOrFeed, self.baseTicker, self.tokenTicker, gasFee);
         } else if (oracle == Oracle.SUPRAORACLE) {
             return getDerivedPriceFromSupra(self.baseProxyOrFeed, self.baseTicker, self.tokenTicker, gasFee);
         } else if (oracle == Oracle.CHAINLINK) {

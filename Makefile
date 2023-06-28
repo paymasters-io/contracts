@@ -8,7 +8,7 @@ remove :; @rm -rf lib && rm -rf .git/modules/*
 
 clean  :; @forge clean
 
-install :; @forge install foundry-rs/forge-std eth-infinitism/account-abstraction openzeppelin/openzeppelin-contracts openzeppelin/openzeppelin-contracts-upgradeable  matter-labs/era-system-contracts smartcontractkit/chainlink-brownie-contracts redstone-finance/redstone-oracles-monorepo api3dao/contracts axelarnetwork/axelar-gmp-sdk-solidity --no-commit
+install :; @forge install foundry-rs/forge-std eth-infinitism/account-abstraction openzeppelin/openzeppelin-contracts openzeppelin/openzeppelin-contracts-upgradeable  matter-labs/era-system-contracts smartcontractkit/chainlink-brownie-contracts redstone-finance/redstone-oracles-monorepo axelarnetwork/axelar-gmp-sdk-solidity --no-commit
 
 update:; @forge update
 

@@ -19,7 +19,6 @@ jobs:
               uses: crytic/slither-action@v0.3.0
               id: slither
               with:
-                  target: "packages/core/"
                   sarif: results.sarif
                   fail-on: none
 

@@ -1,6 +1,6 @@
 name: test
 
-on: [push, pull_request]
+on: [push, pull_request, workflow_call]
 
 env:
     FOUNDRY_PROFILE: ci
@@ -35,7 +35,7 @@ jobs:
 
             - name: Run Forge update
               run: |
-                  make update
+                  make update-needed
               id: update
 
             - name: Run Forge build

@@ -31,7 +31,7 @@
 ### Off-Chain Identifier
 
 Each paymaster has a corresponding off-chain identifier (**metadata**) that is uploaded to IPFS.
-It is just to simplify the aggregation of useable gas sponsors for visual purposes (**app-ui/dashboard**).
+It is just to simplify the aggregation of usable gas sponsors for visual purposes (**app-ui/dashboard**).
 
 ### Access Control
 

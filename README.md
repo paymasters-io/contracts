@@ -1,5 +1,5 @@
 <p align="center">
-    <img src="./img/logo_normal.jpg">
+    <img src="./img/logo_normal.jpg" height="200">
 </p>
 <div align="center">
   <h1 align="center">
@@ -9,7 +9,7 @@
 
 <div align="center">
 
-![GitHub Workflow Status](https://img.shields.io/github/actions/workflow/status/paymasters-io/contracts/makefile.yml)
+![GitHub Workflow Status](https://img.shields.io/github/actions/workflow/status/paymasters-io/contracts/test.yml)
 ![GitHub](https://img.shields.io/github/license/paymasters-io/contracts?logo=github)
 ![GitHub contributors](https://img.shields.io/github/contributors/paymasters-io/contracts?logo=github)
 ![GitHub top language](https://img.shields.io/github/languages/top/paymasters-io/contracts)
@@ -19,10 +19,10 @@
 
 **[paymasters.io](https://paymasters.io)** leverages account abstraction to provide the infrastructure from which users can access and use Paymasters, simplifying transactions and providing superior UX to apps. Opening the gateway to paymasters' discovery and use cases for web3.
 
-[Build](#build) •
-[Test](#test) •
+[Build](#getting-started) •
+[Test](#testing) •
 [Report a bug](https://github.com/paymasters-io/contracts/issues/new?assignees=&labels=bug&template=01_BUG_REPORT.md&title=bug%3A+)
-• [Questions](https://www.newton.so/?tags=paymasters)
+• [Questions](https://t.me/paymasters_io)
 
 </div>
 

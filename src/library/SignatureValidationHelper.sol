@@ -64,13 +64,23 @@ library SignatureValidationHelper {
     }
 
     /// gets the total number of signatures passed to paymasterAndData
-    /// @return 0 if sig length is not 64 or 65 or 128 or 130
-    function total(bytes calldata signatures) public pure returns (uint256) {
-        return
-            signatures.length == 64 || signatures.length == 65
-                ? 1
-                : signatures.length == 128 || signatures.length == 130
-                ? 2
-                : 0;
+    /// @return result 0 if sig length is not 64 or 65 or 128 or 130
+    function total(bytes calldata signatures) public pure returns (uint256 result) {
+        uint256 len = signatures.length;
+        assembly {
+            switch len
+            case 64 {
+
+            }
+            case 65 {
+                result := 1
+            }
+            case 128 {
+
+            }
+            case 130 {
+                result := 2
+            }
+        }
     }
 }

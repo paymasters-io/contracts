@@ -2,29 +2,33 @@
 pragma solidity 0.8.17;
 
 import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
+import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@paymasters-io/library/AccessControlHelper.sol";
 import "@paymasters-io/library/SignatureValidationHelper.sol";
-import "@paymasters-io/library/PaymasterOperationsHelper.sol";
 import "@paymasters-io/library/OracleHelper.sol";
 import "@paymasters-io/library/Errors.sol";
 import "@paymasters-io/security/Guard.sol";
 
+/// @notice validation and access-control impl that can be reused in any EVM or zkEVM paymaster
 abstract contract Core is Guard {
     using ECDSA for bytes32;
+    using SafeERC20 for IERC20;
     using AccessControlHelper for AccessControlSchema;
     using SignatureValidationHelper for bytes;
     using OracleHelper for OracleQueryInput;
-    using PaymasterOperationsHelper for *;
 
     address public vaa; // validation address
-    address[] public siblings;
+    mapping(address => bool) public isSibling;
 
     AccessControlSchema public accessControlSchema;
     SigConfig public signatureConf;
 
-    // saving the (address && strings) together to utilize a single mapping
-    // but consuming more gas
-    mapping(IERC20 => bytes) public tokenToProxyFeedOrTicker;
+    struct TokenInfo {
+        address proxyOrFeed;
+        string ticker;
+    }
+
+    mapping(IERC20 => TokenInfo) public tokenToInfo;
     // debt mechanism is used to track the debt of a paymaster to (this).
     mapping(address => uint256) public siblingsToDebt;
 
@@ -35,26 +39,15 @@ abstract contract Core is Guard {
         _;
     }
 
-    function setNodeSigners(address primarySigner, address secondarySigner, uint8 sigCount) external isAuthorized {
+    function setNodeSigners(address primarySigner, address secondarySigner, uint256 sigCount) external isAuthorized {
         if (sigCount > 2) revert InvalidConfig();
         signatureConf.verifyingSigner1 = primarySigner;
         signatureConf.verifyingSigner2 = secondarySigner;
         signatureConf.validNumOfSignatures = SigCount(sigCount);
     }
 
-    function addSibling(address sibling) external isAuthorized {
-        siblings.push(sibling);
-    }
-
-    function removeSibling(address sibling) external isAuthorized {
-        address[] memory temp = siblings;
-        for (uint256 i = 0; i < temp.length; i++) {
-            if (temp[i] == sibling) {
-                siblings[i] = temp[temp.length - 1];
-                siblings.pop();
-                break;
-            }
-        }
+    function setSibling(address sibling, bool value) external isAuthorized {
+        isSibling[sibling] = value;
     }
 
     function setAccessControlSchema(AccessControlSchema calldata schema) external isAuthorized {
@@ -65,46 +58,46 @@ abstract contract Core is Guard {
         defaultOracle = oracle;
     }
 
-    function previewAccess(address user) public view returns (bool) {
+    function previewAccess(address user) external view returns (bool) {
         return accessControlSchema.previewAccess(user);
     }
 
     // use the next two methods cautiously
     // do not use a ticker oracle with a proxy/feed or vice versa
     // paymasters-io handles this internally
-    function addTokenTicker(IERC20 token, string memory pair) external isAuthorized {
-        tokenToProxyFeedOrTicker[token] = bytes(pair);
+    function addTokenTicker(IERC20 token, string memory ticker) external isAuthorized {
+        tokenToInfo[token].ticker = ticker;
     }
 
     function addTokenProxyOrFeed(IERC20 token, address proxyOrFeed) external isAuthorized {
-        tokenToProxyFeedOrTicker[token] = abi.encodePacked(proxyOrFeed);
+        tokenToInfo[token].proxyOrFeed = proxyOrFeed;
     }
 
-    function withdraw() external isAuthorized {
+    function withdraw() external nonReentrant whenNotPaused isAuthorized {
         uint256 balance = address(this).balance;
         msg.sender.call{value: balance}("");
     }
 
-    function payDebt(address debtor) public payable {
+    function payDebt(address debtor) public payable whenNotPaused {
         siblingsToDebt[debtor] -= msg.value;
+    }
+
+    function _transferTokens(address from, IERC20 feeToken, uint256 amount) internal nonReentrant whenNotPaused {
+        feeToken.safeTransferFrom(from, vaa, amount);
     }
 
     function _getPriceFromOracle(IERC20 feeToken, uint256 amount) internal view returns (uint256) {
         OracleQueryInput memory input = OracleQueryInput(
-            address(bytes20(tokenToProxyFeedOrTicker[IERC20(address(0x0))])),
-            address(bytes20(tokenToProxyFeedOrTicker[feeToken])),
-            string(tokenToProxyFeedOrTicker[IERC20(address(0x0))]),
-            string(tokenToProxyFeedOrTicker[feeToken])
+            tokenToInfo[IERC20(address(0x0))].proxyOrFeed,
+            tokenToInfo[feeToken].proxyOrFeed,
+            tokenToInfo[IERC20(address(0x0))].ticker,
+            tokenToInfo[feeToken].ticker
         );
 
         return input.getDerivedPrice(amount, defaultOracle);
     }
 
-    function _transferTokens(address from, IERC20 feeToken, uint256 amount) internal {
-        uint256 tokenCost = _getPriceFromOracle(feeToken, amount);
-        from.handleTokenTransfer(signatureConf.verifyingSigner2, tokenCost, IERC20(feeToken));
-    }
-
+    /// This method should not revert for any reason other than token transfer
     /// paymasterAndData[0:20] : address(sibling)  || address(this) 20 byte
     /// paymasterAndData[20:40] : IERC20(feeToken) 20byte
     /// paymasterAndData[40:72] : uint256(amount) 32byte
@@ -112,15 +105,16 @@ abstract contract Core is Guard {
     /// paymasterAndData[104:] : bytes(signatures) >64byte
     function _validate(bytes calldata paymasterAndData, address caller) internal virtual returns (bool success) {
         IERC20 feeToken = IERC20(address(bytes20(paymasterAndData[20:40])));
-        if (tokenToProxyFeedOrTicker[feeToken].length == 0) {
+        if (tokenToInfo[feeToken].proxyOrFeed == address(0) || bytes(tokenToInfo[feeToken].ticker).length == 0) {
             revert FailedToValidatedOp();
         }
 
+        // pre-calculated
         uint256 feeAmount = uint256(bytes32(paymasterAndData[40:72]));
 
         address sibling = address(bytes20(paymasterAndData[0:20]));
         // if sibling is not a delegate, then it must be (this)
-        if (siblings.isDelegate(sibling)) {
+        if (isSibling[sibling]) {
             _transferTokens(caller, feeToken, feeAmount);
             return true;
         } else if (sibling != address(this)) {
@@ -152,6 +146,4 @@ abstract contract Core is Guard {
 
         _transferTokens(caller, feeToken, feeAmount);
     }
-
-    function _post(bytes calldata context) internal virtual;
 }

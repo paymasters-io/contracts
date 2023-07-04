@@ -29,6 +29,12 @@ contract TestAccessControlHelper is Test {
         });
     }
 
+    function testGetPayload() public {
+        bytes memory expectedPayload = abi.encodeWithSignature("balanceOf(address)", tester1);
+        bytes memory actualPayload = AccessControlHelper.getPayload(tester1);
+        assertEq(expectedPayload, actualPayload, "Payloads should be equal");
+    }
+
     function testERC20Gate() public {
         deal(address(erc20), tester1, 100);
         bool result1 = AccessControlHelper.ERC20Gate(address(erc20), 100, tester1);
@@ -63,5 +69,18 @@ contract TestAccessControlHelper is Test {
 
         assertTrue(result1, "First result should be true");
         assertFalse(result2, "Second result should be false");
+    }
+
+    function testStaticCall() public {
+        uint256 expectedValue = 42;
+        bytes memory payload = abi.encodeWithSignature("getAnswer()");
+        vm.expectCall(address(this), payload);
+        uint256 value = AccessControlHelper.staticCall(payload, address(this));
+
+        assertEq(value, expectedValue, "Value should match");
+    }
+
+    function getAnswer() public pure returns (uint256) {
+        return 42;
     }
 }

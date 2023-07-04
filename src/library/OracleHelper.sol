@@ -3,6 +3,8 @@ pragma solidity 0.8.17;
 
 import "@paymasters-io/interfaces/IProxy.sol";
 import "@paymasters-io/interfaces/ISupraConsumer.sol";
+import {PriceNotAvailable} from "@paymasters-io/library/Errors.sol";
+
 import "@paymasters-io/interfaces/IRedstoneConsumerNumericBase.sol";
 import "@chainlink/contracts/src/v0.8/interfaces/AggregatorV3Interface.sol";
 
@@ -35,11 +37,8 @@ library OracleHelper {
             return getDerivedPriceFromSupra(self.baseProxyOrFeed, self.baseTicker, self.tokenTicker, gasFee);
         } else if (oracle == Oracle.CHAINLINK) {
             return getDerivedPriceFromChainlink(self.baseProxyOrFeed, self.tokenProxyOrFeed, gasFee);
-        } else if (oracle == Oracle.API3) {
-            return getDerivedPriceFromAPI3(self.baseProxyOrFeed, self.tokenProxyOrFeed, gasFee);
-        } else {
-            revert("invalid oracle");
         }
+        return getDerivedPriceFromAPI3(self.baseProxyOrFeed, self.tokenProxyOrFeed, gasFee);
     }
 
     function getDerivedPriceFromChainlink(

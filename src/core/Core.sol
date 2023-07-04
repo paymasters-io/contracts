@@ -11,8 +11,9 @@ import "@paymasters-io/security/Guard.sol";
 
 abstract contract Core is Guard {
     using ECDSA for bytes32;
-    using OracleHelper for OracleQueryInput;
     using AccessControlHelper for AccessControlSchema;
+    using SignatureValidationHelper for bytes;
+    using OracleHelper for OracleQueryInput;
     using PaymasterOperationsHelper for *;
 
     address public vaa; // validation address
@@ -24,6 +25,7 @@ abstract contract Core is Guard {
     // saving the (address && strings) together to utilize a single mapping
     // but consuming more gas
     mapping(IERC20 => bytes) public tokenToProxyFeedOrTicker;
+    // debt mechanism is used to track the debt of a paymaster to (this).
     mapping(address => uint256) public siblingsToDebt;
 
     Oracle public defaultOracle = Oracle.API3;
@@ -45,9 +47,10 @@ abstract contract Core is Guard {
     }
 
     function removeSibling(address sibling) external isAuthorized {
-        for (uint256 i = 0; i < siblings.length; i++) {
-            if (siblings[i] == sibling) {
-                siblings[i] = siblings[siblings.length - 1];
+        address[] memory temp = siblings;
+        for (uint256 i = 0; i < temp.length; i++) {
+            if (temp[i] == sibling) {
+                siblings[i] = temp[temp.length - 1];
                 siblings.pop();
                 break;
             }
@@ -79,14 +82,76 @@ abstract contract Core is Guard {
 
     function withdraw() external isAuthorized {
         uint256 balance = address(this).balance;
-        payable(msg.sender).transfer(balance);
+        msg.sender.call{value: balance}("");
     }
 
     function payDebt(address debtor) public payable {
         siblingsToDebt[debtor] -= msg.value;
     }
 
-    function _validate(bytes calldata paymasterAndData, address caller) internal virtual;
+    function _getPriceFromOracle(IERC20 feeToken, uint256 amount) internal view returns (uint256) {
+        OracleQueryInput memory input = OracleQueryInput(
+            address(bytes20(tokenToProxyFeedOrTicker[IERC20(address(0x0))])),
+            address(bytes20(tokenToProxyFeedOrTicker[feeToken])),
+            string(tokenToProxyFeedOrTicker[IERC20(address(0x0))]),
+            string(tokenToProxyFeedOrTicker[feeToken])
+        );
+
+        return input.getDerivedPrice(amount, defaultOracle);
+    }
+
+    function _transferTokens(address from, IERC20 feeToken, uint256 amount) internal {
+        uint256 tokenCost = _getPriceFromOracle(feeToken, amount);
+        from.handleTokenTransfer(signatureConf.verifyingSigner2, tokenCost, IERC20(feeToken));
+    }
+
+    /// paymasterAndData[0:20] : address(sibling)  || address(this) 20 byte
+    /// paymasterAndData[20:40] : IERC20(feeToken) 20byte
+    /// paymasterAndData[40:72] : uint256(amount) 32byte
+    /// paymasterAndData[72:104] : bytes32(hash) 32byte
+    /// paymasterAndData[104:] : bytes(signatures) >64byte
+    function _validate(bytes calldata paymasterAndData, address caller) internal virtual returns (bool success) {
+        IERC20 feeToken = IERC20(address(bytes20(paymasterAndData[20:40])));
+        if (tokenToProxyFeedOrTicker[feeToken].length == 0) {
+            revert FailedToValidatedOp();
+        }
+
+        uint256 feeAmount = uint256(bytes32(paymasterAndData[40:72]));
+
+        address sibling = address(bytes20(paymasterAndData[0:20]));
+        // if sibling is not a delegate, then it must be (this)
+        if (siblings.isDelegate(sibling)) {
+            _transferTokens(caller, feeToken, feeAmount);
+            return true;
+        } else if (sibling != address(this)) {
+            revert FailedToValidatedOp();
+        }
+
+        SigConfig memory _signatureConf = signatureConf;
+        SigCount expectedValidationStep = _signatureConf.validNumOfSignatures;
+        bytes32 hash = keccak256(paymasterAndData[72:104]);
+        bytes calldata signatures = paymasterAndData[104:];
+
+        if (expectedValidationStep == SigCount.ONE) {
+            if (_signatureConf.verifyingSigner1 == address(0) && _signatureConf.verifyingSigner2 == address(0)) {
+                revert FailedToValidatedOp();
+            }
+            address signer = signatures.validateOneSignature(hash);
+            success = (signer == _signatureConf.verifyingSigner1 || signer == _signatureConf.verifyingSigner2);
+        } else if (expectedValidationStep == SigCount.TWO) {
+            if (_signatureConf.verifyingSigner1 == address(0) || _signatureConf.verifyingSigner2 == address(0)) {
+                revert FailedToValidatedOp();
+            }
+            (address primarySigner, address secondarySigner) = signatures.validateTwoSignatures(hash);
+            success =
+                (primarySigner == _signatureConf.verifyingSigner1 &&
+                    secondarySigner == _signatureConf.verifyingSigner2) ||
+                (primarySigner == _signatureConf.verifyingSigner2 &&
+                    secondarySigner == _signatureConf.verifyingSigner1);
+        }
+
+        _transferTokens(caller, feeToken, feeAmount);
+    }
 
     function _post(bytes calldata context) internal virtual;
 }

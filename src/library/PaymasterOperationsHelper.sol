@@ -23,14 +23,10 @@ library PaymasterOperationsHelper {
     }
 
     function isDelegate(address[] memory self, address sibling) public pure returns (bool) {
+        if (sibling == address(0)) return false;
         for (uint256 i = 0; i < self.length; i++) {
             if (sibling == self[i]) return true;
         }
         return false;
-    }
-
-    function previewDelegate(address[] storage siblings, address sibling) public pure returns (bool truthy) {
-        truthy = true; // true & true = true, true & false = false, false & false = false.
-        truthy = truthy && isDelegate(siblings, sibling);
     }
 }

@@ -4,9 +4,9 @@ pragma solidity 0.8.17;
 error InvalidSignatureLength();
 error InvalidConfig();
 error UnAuthorized();
+error FailedToValidatedOp();
 
 error OperationFailed();
 error InsufficientAllowance();
 error NotEnoughValueForGas();
-error FailedToValidatedOp();
 error InsufficientValue();

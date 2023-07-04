@@ -9,9 +9,11 @@ jobs:
         uses: paymasters-io/contracts/.github/workflows/test.yml@dev
     spell-check:
         uses: paymasters-io/contracts/.github/workflows/spell-check.yml@dev
+    analyze:
+        uses: paymasters-io/contracts/.github/workflows/slither.yml@dev
 
     publish:
-        needs: [build, spell-check]
+        needs: [build, spell-check, analyze]
         runs-on: ubuntu-latest
         steps:
             - uses: actions/checkout@v3

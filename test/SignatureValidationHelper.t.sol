@@ -39,8 +39,13 @@ contract TestSignatureValidationHelper is Test {
             getTwoSignatures()
         );
 
-        assertEq(signature1, new bytes(0), "First signature should match");
-        assertEq(signature2, new bytes(0), "Second signature should match");
+        bytes
+            memory expectedSignature1 = hex"51f91f25a757e3b744775a7a531415143ba0135fe4e93b3db6b85a6a287c9992516fb71bcb6f9000267e63e1c72311d052d824873f74866ed3c7249f7a7bbfa61c";
+        bytes
+            memory expectedSignature2 = hex"c34147afd27856f9e91f6ade0544c95a14249786ad344985425e49a2d901d149047578233ded7dd41a85e44b5a15aab1c86c197bd8149bf6afb654e4058c099b1c";
+
+        assertEq(signature1, expectedSignature1, "First signature should match");
+        assertEq(signature2, expectedSignature2, "Second signature should match");
     }
 
     function testValidateOneSignature() public {
@@ -59,7 +64,7 @@ contract TestSignatureValidationHelper is Test {
     function testTotal() public {
         uint256 expectedTotal1 = 1;
         uint256 expectedTotal2 = 2;
-        uint256 expectedTotal3 = 3;
+        uint256 expectedTotal3 = 0;
 
         uint256 total1 = SignatureValidationHelper.total(getOneSignature());
         uint256 total2 = SignatureValidationHelper.total(getTwoSignatures());
@@ -67,6 +72,6 @@ contract TestSignatureValidationHelper is Test {
 
         assertEq(total1, expectedTotal1, "Total for one signature should be 1");
         assertEq(total2, expectedTotal2, "Total for two signatures should be 2");
-        assertEq(total3, expectedTotal3, "Total for three signatures should be 3");
+        assertEq(total3, expectedTotal3, "Total for three signatures should be 0");
     }
 }

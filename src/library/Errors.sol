@@ -4,10 +4,12 @@ pragma solidity 0.8.17;
 error InvalidSignatureLength();
 error InvalidConfig();
 error UnAuthorized();
-error FailedToValidatedOp();
-error PriceNotAvailable();
-
-error OperationFailed();
-error InsufficientAllowance();
+error FailedToValidateOp();
+error FailedToValidateOpDelegation();
+error InvalidNonce(uint256 nonce);
+error OnlyBootloader();
+error InvalidPaymasterInput();
+error UnsupportedPaymasterFlow();
 error NotEnoughValueForGas();
-error InsufficientValue();
+error OperationFailed();
+error PriceNotAvailable();

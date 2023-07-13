@@ -17,7 +17,7 @@
 [![GitHub commit activity](https://img.shields.io/github/commit-activity/y/paymasters-io/contracts?logo=github)](https://github.com/paymasters-io/contracts/commits/master)
 [![Twitter Follow](https://img.shields.io/twitter/follow/paymasters_io?style=social)](https://twitter.com/paymasters_io)
 
-**[paymasters.io](https://paymasters.io)** leverages account abstraction to provide the infrastructure from which users can access and use Paymasters, simplifying transactions and providing superior UX to apps. Opening the gateway to paymasters' discovery and use cases for web3.
+**[paymasters.io](https://paymasters.io)** leverages account abstraction to provide the infrastructure from which users can pay for user operations (tx) in a decentralized manner. It is a **gas abstraction** layer that allows users to pay for transactions in any ERC20 token.
 
 [Build](#getting-started) •
 [Test](#testing) •
@@ -30,14 +30,13 @@
 
 ### Off-Chain Identifier
 
-Each paymaster has a corresponding off-chain identifier (**metadata**) that is uploaded to IPFS.
-It is just to simplify the aggregation of usable gas sponsors for visual purposes (**app-ui/dashboard**).
+Each paymaster has a unique identifier that is used to identify it off-chain. This identifier is used to identify the paymaster in the paymaster registry.
 
 ### Access Control
 
 **[paymasters.io](https://paymasters.io)** core contract uses a **schema-based** approach.
 
-It introduced a schema-based approach for enabling access control features in a paymaster. By default, each paymaster core contract has three access control rules corresponding to the following:
+It uses a **role-based** access control system to manage access to the core contract functions.
 
 - ERC20 gating
 - nonce limiting
@@ -45,22 +44,31 @@ It introduced a schema-based approach for enabling access control features in a 
 
 ### Validators
 
-A validator is a **smart account** with the power to sign a valid `paymasterAndData` for our verifying paymaster.
-A validator must be trusted to only sign valid transactions and is incentivized to do so.
+A validator is an **account** that is allowed to sign user operations. Validators are used to verify user operations before they are submitted on-chain.
+
+the validators:
+
+- preview user operations before signing
+- sign user-Ops
+- re-route delegated operations to the correct paymaster
+- check if a delegate is a valid paymaster
+- checks if a delegate can pay
+
+#### more on delegates
+
+> **delegates** are just paymasters (they help achieve interoperability between paymasters). we see paymasters as a family of contracts that can be used together to achieve a specific use case. therefore, a delegate is a paymaster that can sponsor transactions for another paymaster (or known sibling).
 
 ### Signature Verification
 
 **[paymasters.io](https://paymasters.io)** uses 3 signature verification paths
 
-`0-of-3 (ERC20 Paymaster)`: When no signature is required, the paymaster functions as an ERC20 paymaster.
+`0-of-2 (ERC20 Paymaster)`: When no signature is required, the paymaster functions as an ERC20 paymaster.
 
-`1-of-3 (Verifying paymaster)`: Signature corresponding to the VALIDATOR must be present in the paymasterData.
+`1-of-2 (Verifying paymaster)`: Signature corresponding to the VALIDATOR must be present in the paymasterData.
 
-`2-of-3 (Verifying paymaster with 2FA)`: Signatures corresponding to the VALIDATOR must be present in the paymasterData, additional entropy from an external signer is required.
+`2-of-2 (Verifying paymaster with 2FA)`: Signature corresponding to the VALIDATOR and an external signer must be present in the paymasterData.
 
-  > **VALIDATOR (va)**:  A verified userOp hash signer for our verifying paymasters.
-  >
-  > **VALIDATION ADDRESS (vaa)**: A privileged address for a paymaster (i.e admin);
+  > **Validation address (vaa)**: A paymaster admin;
 
 # Getting Started
 

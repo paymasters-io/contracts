@@ -22,10 +22,10 @@ contract TestAccessControlHelper is Test {
         erc20 = new ERC20("Test Token", "TST");
         erc721 = new ERC721("Test NFT", "TNFT");
         schema = AccessControlSchema({
-            maxNonce: 100,
             ERC20GateValue: 100,
             ERC20GateContract: address(erc20),
-            NFTGateContract: address(erc721)
+            NFTGateContract: address(erc721),
+            onchainPreviewEnabled: true
         });
     }
 
@@ -48,14 +48,6 @@ contract TestAccessControlHelper is Test {
         deal(address(erc721), tester1, 1);
         bool result1 = AccessControlHelper.NFTGate(address(erc721), tester1);
         bool result2 = AccessControlHelper.NFTGate(address(erc721), tester2);
-
-        assertTrue(result1, "First result should be true");
-        assertFalse(result2, "Second result should be false");
-    }
-
-    function testValidNonce() public {
-        bool result1 = schema.validNonce(50);
-        bool result2 = schema.validNonce(150);
 
         assertTrue(result1, "First result should be true");
         assertFalse(result2, "Second result should be false");

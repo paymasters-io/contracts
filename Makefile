@@ -22,7 +22,7 @@ coverage :; @forge coverage -vv
 
 snapshot :; @forge snapshot
 
-slither :; @forge clean && make build && slither .
+slither :; @forge clean && forge build --build-info && slither .
 
 format :; @prettier --write src/**/*.sol && prettier --write src/**/**/*.sol
 

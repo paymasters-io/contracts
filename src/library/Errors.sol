@@ -5,11 +5,12 @@ error InvalidSignatureLength();
 error InvalidConfig();
 error UnAuthorized();
 error FailedToValidateOp();
-error FailedToValidateOpDelegation();
+error InvalidHash();
 error InvalidNonce(uint256 nonce);
 error OnlyBootloader();
 error InvalidPaymasterInput();
 error UnsupportedPaymasterFlow();
-error NotEnoughValueForGas();
+error AccessDenied();
+
 error OperationFailed();
 error PriceNotAvailable();

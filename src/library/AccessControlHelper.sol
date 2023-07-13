@@ -8,6 +8,7 @@ struct AccessControlSchema {
     address ERC20GateContract;
     address NFTGateContract;
     bool onchainPreviewEnabled;
+    bool useStrict;
 }
 
 library AccessControlHelper {
@@ -35,19 +36,15 @@ library AccessControlHelper {
         return nftGateResult && erc20GateResult;
     }
 
-    function staticCall(bytes memory _payload, address _to) public view returns (uint256) {
-        bytes memory returnData;
+    function staticCall(bytes memory _payload, address _to) public view returns (uint256 result) {
         assembly {
             let success := staticcall(gas(), _to, add(_payload, 0x20), mload(_payload), mload(0x40), 0)
             if iszero(success) {
                 revert(add(0x20, "staticcall operation failed"), 24)
             }
-            let returnDataSize := returndatasize()
-            returnData := mload(0x40)
-            mstore(0x40, add(returnData, add(returnDataSize, 0x20)))
-            mstore(returnData, returnDataSize)
-            returndatacopy(add(returnData, 0x20), 0, returnDataSize)
+            let returnData := mload(0x40)
+            returndatacopy(returnData, 0, 32)
+            result := mload(returnData)
         }
-        return abi.decode(returnData, (uint256));
     }
 }

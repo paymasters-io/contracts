@@ -3,6 +3,7 @@ pragma solidity 0.8.17;
 
 import {Core, ECDSA, AccessControlSchema} from "@paymasters-io/core/Core.sol";
 import "@paymasters-io/library/Errors.sol";
+import "@paymasters-io/interfaces/IRebate.sol";
 import "@era/system/contracts/Constants.sol";
 import {IPaymasterFlow} from "@era/system/contracts/interfaces/IPaymasterFlow.sol";
 import {TransactionHelper, Transaction} from "@era/system/contracts/libraries/TransactionHelper.sol";
@@ -16,7 +17,8 @@ contract PaymastersGeneral is IPaymaster, Core {
         uint256 erc20GateValue,
         address erc20GateToken,
         address erc721gateToken,
-        address _vaa
+        address _vaa,
+        address strictDestination
     ) {
         vaa = _vaa;
         maxNonce = _maxNonce;
@@ -24,8 +26,12 @@ contract PaymastersGeneral is IPaymaster, Core {
             ERC20GateValue: erc20GateValue,
             ERC20GateContract: erc20GateToken,
             NFTGateContract: erc721gateToken,
-            onchainPreviewEnabled: true
+            onchainPreviewEnabled: true,
+            useStrict: strictDestination != address(0)
         });
+        if (strictDestination != address(0)) {
+            isDestination[strictDestination] = true;
+        }
     }
 
     modifier onlyBootloader() {
@@ -55,33 +61,52 @@ contract PaymastersGeneral is IPaymaster, Core {
         Transaction calldata _transaction
     ) external payable onlyBootloader returns (bytes4 magic, bytes memory context) {
         magic = PAYMASTER_VALIDATION_SUCCESS_MAGIC;
+        bool valid = false;
 
         if (_transaction.paymasterInput.length < 24) revert InvalidPaymasterInput();
         bytes4 paymasterInputSelector = bytes4(_transaction.paymasterInput[0:4]);
         if (paymasterInputSelector == IPaymasterFlow.general.selector) {
             uint256 providedNonce = _transaction.nonce;
             if (maxNonce != 0 && providedNonce >= maxNonce) revert InvalidNonce(providedNonce);
-
-            address user = address(uint160(_transaction.from));
+            address recipient = address(uint160(_transaction.to));
+            if (accessControlSchema.useStrict && !isDestination[recipient]) revert AccessDenied();
+            address caller = address(uint160(_transaction.from));
             uint256 gasFee = _transaction.gasLimit * _transaction.maxFeePerGas;
+            address paymaster = address(bytes20(_transaction.paymasterInput[4:24]));
 
-            if (_transaction.paymasterInput.length > 56) {
-                require(
-                    getHash(_transaction, address(bytes20(_transaction.paymasterInput[4:24]))) ==
-                        keccak256(_transaction.paymasterInput[24:56]),
-                    "Invalid hash"
-                );
+            require(paymaster != address(0), "invalid paymaster");
+
+            if (
+                !(_transaction.paymasterInput.length > 56 &&
+                    getHash(_transaction, paymaster) == keccak256(_transaction.paymasterInput[24:56]))
+            ) revert InvalidHash();
+
+            if (isDelegator[paymaster]) {
+                delegatorsToDebt[paymaster] += gasFee;
+                valid = _validateWithDelegation(_transaction.paymasterInput, caller, paymaster);
+            } else if (paymaster == address(this)) {
+                valid = _validateWithoutDelegation(_transaction.paymasterInput, caller);
             }
 
-            if (_validateWithDelegation(_transaction.paymasterInput, user)) {
-                (bool success, ) = payable(BOOTLOADER_FORMAL_ADDRESS).call{value: gasFee}("");
-                if (!success) revert NotEnoughValueForGas();
+            if (valid) {
+                context = abi.encodePacked(paymaster, gasFee);
+                _payBootloader(gasFee);
             } else {
-                // don't revert, just return a different magic number
+                // don't revert, just return different magic
                 magic = PAYMASTER_VALIDATION_ERROR_MAGIC;
             }
         } else {
             revert UnsupportedPaymasterFlow();
+        }
+    }
+
+    function _payBootloader(uint256 gasFee) internal {
+        address bootloaderAddr = BOOTLOADER_FORMAL_ADDRESS;
+        assembly {
+            let success := call(gas(), bootloaderAddr, gasFee, 0, 0, 0, 0)
+            if iszero(success) {
+                revert(add(0x20, "Not Enough Value For Gas"), 24)
+            }
         }
     }
 
@@ -92,7 +117,19 @@ contract PaymastersGeneral is IPaymaster, Core {
         bytes32,
         ExecutionResult _txResult,
         uint256 _maxRefundedGas
-    ) external payable override onlyBootloader {}
+    ) external payable override onlyBootloader {
+        // not guaranteed to execute.
+        // supports ERC20 rebates by external contract
+        if (rebateContract != address(0)) {
+            IRebate(rebateContract).rebate(
+                address(uint160(_transaction.from)),
+                _transaction.value,
+                uint8(_txResult),
+                _maxRefundedGas,
+                _context
+            );
+        }
+    }
 
     receive() external payable {}
 }

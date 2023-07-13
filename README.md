@@ -58,6 +58,9 @@ the validators:
 
 > **delegates** are just paymasters (they help achieve interoperability between paymasters). we see paymasters as a family of contracts that can be used together to achieve a specific use case. therefore, a delegate is a paymaster that can sponsor transactions for another paymaster (or known sibling).
 
+The dynamic nature of delegation, allows a delegator contract to implement custom logic that can be handled at validation time.
+The [IDelegator interface](./src/interfaces/IDelegator.sol) can enable both paymaster interoperability and contract hook programming.
+
 ### Signature Verification
 
 **[paymasters.io](https://paymasters.io)** uses 3 signature verification paths
@@ -77,10 +80,10 @@ the validators:
 Please install the following:
 
 - [Git](https://git-scm.com/book/en/v2/Getting-Started-Installing-Git)  
-- [pnpm](https://pnpm.io/installation)
+- [PNPM](https://pnpm.io/installation)
 - [Foundry / Foundryup](https://github.com/gakonst/foundry)
   - This will install `forge`, `cast`, and `anvil`
-  - You can run `forge --version` to verify your installation
+  - You can run: `forge --version` to verify your installation
   - To update, just run `Foundryup`
 - [foundry-zksync](https://github.com/matter-labs/foundry-zksync)
 - [make](https://askubuntu.com/questions/161104/how-do-i-install-make)
@@ -89,21 +92,31 @@ Please install the following:
 
 1. first, clone the repo
 
-```sh
-git clone https://github.com/paymasters-io/contracts
-```
+  ```sh
+  git clone https://github.com/paymasters-io/contracts
+  ```
 
 2. cd into the contracts folder
 
-```sh
-cd contracts
-```
+  ```sh
+  cd contracts
+  ```
 
-3. install dependencies
+3. Install dependencies
 
-```sh
-make install 
-```
+  ```sh
+  make install 
+  ```
+
+4. To run commands for zkSync-era use: `zk-forge` instead of `forge`. For example:
+
+  ```sh
+  zk-forge compile
+  # or
+  pnpm compile:zk
+  ```
+
+note: you must set an alias for `zk-forge` to work. there are some available bash scripts you can use with zkSync-foundry.
 
 ## Testing
 
@@ -133,7 +146,7 @@ or
 pnpm deploy chain=<chain symbol> contract=<contract name>
 ```
 
-if your chain does not support [EIP1559](#) transactions, you can use the legacy deployment script
+if your chain does not support [EIP1559](https://eips.ethereum.org/EIPS/eip-1559) transactions, you can use the legacy deployment script
 
 ```sh
 make deploy-legacy chain=<chain symbol> contract=<contract name>
@@ -181,7 +194,7 @@ You can also deploy on a forked network
 make fork chain=<chain symbol>
 ```
 
-This is not available for `zksync` also make sure to have the  `RPC_URL` of the chain specified in your `.env` file
+This is not available for `zkSync` also make sure to have the  `RPC_URL` of the chain specified in your `.env` file
 
 - To deploy to a forked network
   
@@ -190,7 +203,7 @@ This is not available for `zksync` also make sure to have the  `RPC_URL` of the 
 ### Using the Factory
 
 The factory deployed at the address: `...`` in most EVM chains, allows you to deterministically deploy a paymaster contract on the same address across different chains. except for zkEVMs with native account abstraction.
-Using [Foundry's cast](https://book.getfoundry.sh/cast/) or [zkCast from foundry-zksync](https://github.com/matter-labs/foundry-zksync), you can deploy a paymaster from the factory.
+Using [Foundry's cast](https://book.getfoundry.sh/cast/) or [zkCast from Foundry-zkSync](https://github.com/matter-labs/foundry-zksync), you can deploy a paymaster from the factory.
 
 > make sure you have your private key.
 

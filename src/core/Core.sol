@@ -14,10 +14,12 @@ abstract contract Core is ICore, Guard {
     using AccessControlHelper for AccessControlSchema;
     using SignatureValidationHelper for bytes;
 
+    address public rebateContract;
     address public vaa; // validation address
     uint256 public maxNonce;
 
     mapping(address => bool) public isDelegator;
+    mapping(address => bool) public isDestination;
 
     AccessControlSchema public accessControlSchema;
     SigConfig public signatureConf;
@@ -41,6 +43,10 @@ abstract contract Core is ICore, Guard {
         isDelegator[delegator] = value;
     }
 
+    function setStrictDestination(address destination, bool value) external isAuthorized {
+        isDestination[destination] = value;
+    }
+
     function setAccessControlSchema(AccessControlSchema calldata schema) external isAuthorized {
         accessControlSchema = schema;
     }
@@ -53,15 +59,19 @@ abstract contract Core is ICore, Guard {
         maxNonce = _maxNonce;
     }
 
+    function setRebateContract(address _rebateContract) external isAuthorized {
+        rebateContract = _rebateContract;
+    }
+
     function previewAccess(address user) public view virtual returns (bool) {
         return accessControlSchema.previewAccess(user);
     }
 
     function previewValidation(bytes calldata paymasterAndData, address caller) external view virtual returns (bool) {
-        return _validateWithDelegation(paymasterAndData, caller);
+        return _validate(paymasterAndData, caller);
     }
 
-    function withdraw() external nonReentrant whenNotPaused isAuthorized {
+    function withdraw() external whenNotPaused isAuthorized {
         uint256 balance = address(this).balance;
         (bool success, ) = payable(msg.sender).call{value: balance}("");
         if (!success) revert OperationFailed();
@@ -73,19 +83,21 @@ abstract contract Core is ICore, Guard {
 
     function _validateWithDelegation(
         bytes calldata paymasterAndData,
+        address caller,
+        address delegator
+    ) internal view virtual returns (bool) {
+        return IDelegator(delegator).previewValidation(paymasterAndData, caller);
+    }
+
+    function _validateWithoutDelegation(
+        bytes calldata paymasterAndData,
         address caller
     ) internal view virtual returns (bool) {
-        address delegator = address(bytes20(paymasterAndData[4:24]));
-        if (delegator == address(this)) {
-            return _validate(paymasterAndData, caller);
-        } else if (isDelegator[delegator] && delegator != address(0)) {
-            require(ICore(delegator).previewValidation(paymasterAndData, caller), "invalid delegation");
-            return true;
-        }
-        revert FailedToValidateOpDelegation();
+        return _validate(paymasterAndData, caller);
     }
 
     function _validate(bytes calldata paymasterAndData, address caller) private view returns (bool success) {
+        _beforeValidation(caller);
         SigConfig memory _signatureConf = signatureConf;
 
         bytes32 hash = 0x0;
@@ -96,7 +108,7 @@ abstract contract Core is ICore, Guard {
             signatures = paymasterAndData[56:];
         }
 
-        if (accessControlSchema.onchainPreviewEnabled) require(previewAccess(caller), "no access");
+        if (accessControlSchema.onchainPreviewEnabled && !previewAccess(caller)) revert AccessDenied();
 
         SigCount expectedValidationStep = _signatureConf.validNumOfSignatures;
         if (expectedValidationStep == SigCount.ONE) {
@@ -120,5 +132,14 @@ abstract contract Core is ICore, Guard {
         } else {
             success = true;
         }
+        _afterValidation(caller);
+    }
+
+    function _beforeValidation(address caller) internal view virtual {
+        (caller);
+    }
+
+    function _afterValidation(address caller) internal view virtual {
+        (caller);
     }
 }

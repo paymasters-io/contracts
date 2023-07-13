@@ -25,7 +25,8 @@ contract TestAccessControlHelper is Test {
             ERC20GateValue: 100,
             ERC20GateContract: address(erc20),
             NFTGateContract: address(erc721),
-            onchainPreviewEnabled: true
+            onchainPreviewEnabled: true,
+            useStrict: true
         });
     }
 

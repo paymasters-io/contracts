@@ -22,7 +22,7 @@ coverage :; @forge coverage -vv
 
 snapshot :; @forge snapshot
 
-slither :; @forge clean && forge build --build-info && slither .
+slither :; @forge clean && forge build --build-info && slither . && echo "Static analysis finished"
 
 format :; @prettier --write src/**/*.sol && prettier --write src/**/**/*.sol
 

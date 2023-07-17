@@ -1,13 +1,19 @@
 {
-    "filter_paths": "lib",
-    "exclude_low": true,
+    "filter_paths": "(lib/|test/)",
+    "exclude_low": false,
     "foundry_ignore_compile": true,
+    "exclude_informational": false,
+    "solc_disable_warnings": true,
     "solc_remaps": [
         "ds-test/=lib/ds-test/src/",
         "forge-std/=lib/forge-std/src/",
+        "@paymasters-io/=src/",
+        "@aa/=lib/account-abstraction/",
         "@chainlink/=lib/chainlink-brownie-contracts/",
-        "@openzeppelin/=lib/openzeppelin-contracts/",
-        "@redstone/=lib/redstone-oracles-monorepo/packages/evm-connector/",
-        "@matterlabs/=node_modules/@matterlabs/"
+        "@openzeppelin/contracts/=lib/openzeppelin-contracts/contracts/",
+        "@openzeppelin/contracts-upgradeable/=lib/openzeppelin-contracts-upgradeable/contracts/",
+        "@axelar/=lib/axelar-gmp-sdk-solidity/",
+        "@era/system/contracts/=lib/era-system-contracts/contracts/",
+        "@redstone-finance/contracts/=lib/redstone-oracles-monorepo/packages/evm-connector/contracts/"
     ]
 }

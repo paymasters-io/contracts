@@ -8,6 +8,8 @@ broadcast/
 
 node_modules
 package-lock.json
+pnpm-lock.yaml
+yarn.lock
 
 .DS_Store
 src/.DS_Store
@@ -15,6 +17,3 @@ src/.DS_Store
 artifacts
 .deps
 *.reduced.sol
-
-# spell check ignore
-yarn.lock

@@ -1,0 +1,49 @@
+name: test
+
+on: [push, pull_request, workflow_call]
+
+env:
+    FOUNDRY_PROFILE: ci
+
+jobs:
+    check:
+        strategy:
+            fail-fast: true
+
+        name: Foundry project
+        runs-on: ubuntu-latest
+        steps:
+            - uses: actions/checkout@v3
+              with:
+                  submodules: recursive
+
+            - name: Install Foundry
+              uses: foundry-rs/foundry-toolchain@v1
+              with:
+                  version: nightly
+
+            - name: Run Forge clean
+              run: |
+                  forge --version
+                  make clean
+              id: clean
+
+            - name: Run Forge install
+              run: |
+                  make install
+              id: install
+
+            - name: Run Forge update
+              run: |
+                  make update-needed
+              id: update
+
+            - name: Run Forge build
+              run: |
+                  make build
+              id: build
+
+            - name: Run Forge tests
+              run: |
+                  make test
+              id: test

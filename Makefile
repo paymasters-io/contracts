@@ -1,55 +1,33 @@
 -include .env
 
-.PHONY: all test clean deploy-anvil
+.PHONY: all test clean install update build
 
-all: yarn clean remove install build
+all: remove clean install build test
 
-# Clean the repo
-clean  :; forge clean
+remove :; @rm -rf lib && rm -rf .git/modules/*
 
-# Remove modules
-remove :; rm -rf lib && rm -rf .git/modules/*
+clean  :; @forge clean
 
-install :; forge install smartcontractkit/chainlink-brownie-contracts foundry-rs/forge-std openzeppelin/openzeppelin-contracts redstone-finance/redstone-oracles-monorepo omurovec/foundry-zksync-era --no-commit
+install :; @forge install foundry-rs/forge-std eth-infinitism/account-abstraction openzeppelin/openzeppelin-contracts openzeppelin/openzeppelin-contracts-upgradeable  matter-labs/era-system-contracts smartcontractkit/chainlink-brownie-contracts redstone-finance/redstone-oracles-monorepo axelarnetwork/axelar-gmp-sdk-solidity --no-commit
 
-yarn :; yarn
+update:; @forge update
 
-# Update Dependencies
-update:; forge update
+update-needed:; @forge update lib/redstone-oracles-monorepo
 
-build:; forge build --build-info
+build:; @forge build --build-info --sizes
 
-test :; forge test
+test :; @forge test --gas-report -vvv
 
-snapshot :; forge snapshot
+coverage :; @forge coverage -vv
 
-slither :; forge clean && make build && slither .
+snapshot :; @forge snapshot
 
-myth :; myth analyze ./src/Base.sol --solc-json mythril.config.json --solv 0.8.15 --max-depth 20
+slither :; @forge clean && forge build --build-info && slither . && echo "Static analysis finished"
 
-format :; prettier --write src/**/*.sol && prettier --write src/**/**/*.sol
+format :; @prettier --write src/**/*.sol && prettier --write src/**/**/*.sol
 
-# solhint should be installed globally
-lint :; solhint src/**/*.sol && solhint src/*.sol
+lint :; @solhint src/**/*.sol && solhint src/*.sol
 
-anvil :; anvil -m 'test test test test test test test test test test test junk'
+deploy :; @forge script script/${contract}.s.sol:Deploy${contract}Script --rpc-url ${$(CHAIN)_RPC_URL}  --private-key ${PRIVATE_KEY} --broadcast --verify --etherscan-api-key ${ETHERSCAN_API_KEY} -vv
 
-anvil-fork :; anvil --fork-url ${RPC_URL} -m 'test test test test test test test test test test test junk'
-
-# use the "@" to hide the command from your shell 
-deploy-goerli :; @forge script script/${contract}.s.sol:Deploy${contract} --rpc-url ${GOERLI_RPC_URL}  --private-key ${PRIVATE_KEY} --broadcast --verify --etherscan-api-key ${ETHERSCAN_API_KEY}  -vvvv
-
-# use the "@" to hide the command from your shell 
-deploy-evmos :; @forge script script/${contract}.s.sol:Deploy${contract} --rpc-url ${RPC_URL}  --private-key ${PRIVATE_KEY} --broadcast  -vvvv
-
-# use the "@" to hide the command from your shell 
-deploy-evmos-fork :; @forge script script/${contract}.s.sol:Deploy${contract} --rpc-url http://localhost:8545  --private-key 0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80 --broadcast
-
-# This is the private key of account from the mnemonic from the "make anvil" command
-deploy-anvil :; @forge script script/${contract}.s.sol:Deploy${contract} --rpc-url http://localhost:8545  --private-key 0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80 --broadcast 
-
-deploy-all :; make deploy-${network} contract=APIConsumer && make deploy-${network} contract=KeepersCounter && make deploy-${network} contract=PriceFeedConsumer && make deploy-${network} contract=VRFConsumerV2
-
-deploy-pf :; yarn hardhat deploy-zksync --network eraTestnet
-
-verify-pf :; yarn hardhat verify --network eraTestnet ${contract}
+deploy-legacy :; @forge script script/${contract}.s.sol:Deploy${contract}Script --rpc-url ${$(CHAIN)_RPC_URL}  --private-key ${PRIVATE_KEY} --legacy --broadcast -vvv

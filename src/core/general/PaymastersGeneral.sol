@@ -68,12 +68,14 @@ contract PaymastersGeneral is IPaymaster, Core {
         if (paymasterInputSelector == IPaymasterFlow.general.selector) {
             uint256 providedNonce = _transaction.nonce;
             if (maxNonce != 0 && providedNonce >= maxNonce) revert InvalidNonce(providedNonce);
+
             address recipient = address(uint160(_transaction.to));
             if (accessControlSchema.useStrict && !isDestination[recipient]) revert AccessDenied();
+
             address caller = address(uint160(_transaction.from));
             uint256 gasFee = _transaction.gasLimit * _transaction.maxFeePerGas;
-            address paymaster = address(bytes20(_transaction.paymasterInput[4:24]));
 
+            address paymaster = address(bytes20(_transaction.paymasterInput[4:24]));
             require(paymaster != address(0), "invalid paymaster");
 
             if (
@@ -83,13 +85,13 @@ contract PaymastersGeneral is IPaymaster, Core {
 
             if (isDelegator[paymaster]) {
                 delegatorsToDebt[paymaster] += gasFee;
-                valid = _validateWithDelegation(_transaction.paymasterInput, caller, paymaster);
+                valid = _validateWithDelegation(_transaction.paymasterInput[4:], caller, paymaster);
             } else if (paymaster == address(this)) {
-                valid = _validateWithoutDelegation(_transaction.paymasterInput, caller);
+                valid = _validateWithoutDelegation(_transaction.paymasterInput[4:], caller);
             }
 
             if (valid) {
-                context = abi.encodePacked(paymaster, gasFee);
+                context = abi.encode(paymaster, gasFee);
                 _payBootloader(gasFee);
             } else {
                 // don't revert, just return different magic
@@ -100,7 +102,7 @@ contract PaymastersGeneral is IPaymaster, Core {
         }
     }
 
-    function _payBootloader(uint256 gasFee) internal {
+    function _payBootloader(uint256 gasFee) internal onlyBootloader {
         address bootloaderAddr = BOOTLOADER_FORMAL_ADDRESS;
         assembly {
             let success := call(gas(), bootloaderAddr, gasFee, 0, 0, 0, 0)

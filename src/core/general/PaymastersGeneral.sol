@@ -122,11 +122,10 @@ contract PaymastersGeneral is IPaymaster, Core {
     ) external payable override onlyBootloader {
         // not guaranteed to execute.
         // supports ERC20 rebates by external contract
-        if (rebateContract != address(0)) {
+        if (rebateContract != address(0) && _txResult != ExecutionResult.Revert) {
             IRebate(rebateContract).rebate(
                 address(uint160(_transaction.from)),
                 _transaction.value,
-                uint8(_txResult),
                 _maxRefundedGas,
                 _context
             );

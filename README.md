@@ -158,6 +158,8 @@ example: `make deploy chain=BSC contract=Paymaster`
 
 This will run the following inside the specified target
 
+deploying on zkSync, you need to manually run zk-forge
+
 ```sh
 forge script script/${contract}.s.sol:Deploy${contract} --rpc-url $${$(CHAIN)_RPC_URL}  --private-key ${PRIVATE_KEY} --broadcast --verify --etherscan-api-key ${ETHERSCAN_API_KEY}  -vv
 
@@ -200,7 +202,7 @@ This is not available for `zkSync` also make sure to have the  `RPC_URL` of the 
   
   Use the same command as `deploy-local`
 
-### Using the Factory
+<!-- ### Using the Factory
 
 The factory deployed at the address: `...`` in most EVM chains, allows you to deterministically deploy a paymaster contract on the same address across different chains. except for zkEVMs with native account abstraction.
 Using [Foundry's cast](https://book.getfoundry.sh/cast/) or [zkCast from Foundry-zkSync](https://github.com/matter-labs/foundry-zksync), you can deploy a paymaster from the factory.
@@ -216,7 +218,7 @@ To use the Factory:
 make factory-deploy chain=<chain> admin=<admin address> salt=<deployment salt>
 ```
 
-example: `make factory-deploy chain=BSC admin=0xB8AF7Fa3DBF5D0c557b6b6dC874c3CC85B0E8d95 salt=21`. Note salted deployments are not available on chains without the `CREATE2` factory.
+example: `make factory-deploy chain=BSC admin=0xB8AF7Fa3DBF5D0c557b6b6dC874c3CC85B0E8d95 salt=21`. Note salted deployments are not available on chains without the `CREATE2` factory. -->
 
 ## Security
 

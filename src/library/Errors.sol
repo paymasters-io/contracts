@@ -11,6 +11,6 @@ error OnlyBootloader();
 error InvalidPaymasterInput();
 error UnsupportedPaymasterFlow();
 error AccessDenied();
-
+error TokenNotSupported(address token);
 error OperationFailed();
 error PriceNotAvailable();

@@ -103,9 +103,9 @@ abstract contract Core is ICore, Guard {
         bytes32 hash = 0x0;
         bytes memory signatures = new bytes(0);
 
-        if (paymasterAndData.length > 56) {
-            hash = keccak256(paymasterAndData[24:56]).toEthSignedMessageHash();
-            signatures = paymasterAndData[56:];
+        if (paymasterAndData.length > 52) {
+            hash = keccak256(paymasterAndData[20:52]).toEthSignedMessageHash();
+            signatures = paymasterAndData[52:];
         }
 
         if (accessControlSchema.onchainPreviewEnabled && !previewAccess(caller)) revert AccessDenied();
@@ -115,14 +115,14 @@ abstract contract Core is ICore, Guard {
             if (_signatureConf.verifyingSigner1 == address(0) && _signatureConf.verifyingSigner2 == address(0)) {
                 revert FailedToValidateOp();
             }
-            require(paymasterAndData.length > 56, "hash or sig possibly 0x0");
+            require(paymasterAndData.length > 52, "hash or sig possibly 0x0");
             address signer = signatures.validateOneSignature(hash);
             success = (signer == _signatureConf.verifyingSigner1 || signer == _signatureConf.verifyingSigner2);
         } else if (expectedValidationStep == SigCount.TWO) {
             if (_signatureConf.verifyingSigner1 == address(0) || _signatureConf.verifyingSigner2 == address(0)) {
                 revert FailedToValidateOp();
             }
-            require(paymasterAndData.length > 56, "hash or sig possibly 0x0");
+            require(paymasterAndData.length > 52, "hash or sig possibly 0x0");
             (address primarySigner, address secondarySigner) = signatures.validateTwoSignatures(hash);
             success =
                 (primarySigner == _signatureConf.verifyingSigner1 &&

@@ -43,23 +43,36 @@ abstract contract TokenManager is Core, ITokenManager {
         return input.getDerivedPrice(amount, defaultOracle);
     }
 
-    /// paymasterAndData[4:24] : IERC20(feeToken) 20byte
-    /// paymasterAndData[24:] : ...paymasterAndData
-    function _validateWithDelegation(
-        bytes calldata paymasterAndData,
-        address caller
-    ) internal view override returns (bool success) {
-        address feeToken = address(bytes20(paymasterAndData[4:24]));
+    function _validateToken(address feeToken) internal view {
         require(feeToken != address(0x0), "feeToken cannot be 0x0");
 
         if (
             tokenToInfo[IERC20(feeToken)].proxyOrFeed == address(0) ||
             bytes(tokenToInfo[IERC20(feeToken)].ticker).length == 0
         ) {
-            revert FailedToValidateOpDelegation();
+            revert TokenNotSupported(feeToken);
         }
+    }
 
-        success = super._validateWithDelegation(paymasterAndData[24:], caller);
+    /// paymasterAndData[4:24] : IERC20(feeToken) 20byte
+    /// paymasterAndData[24:] : ...paymasterAndData
+    function _validateWithDelegation(
+        bytes calldata paymasterAndData,
+        address caller,
+        address delegator
+    ) internal view override returns (bool) {
+        address feeToken = address(bytes20(paymasterAndData[0:20]));
+        _validateToken(feeToken);
+        return super._validateWithDelegation(paymasterAndData[20:], caller, delegator);
+    }
+
+    function _validateWithoutDelegation(
+        bytes calldata paymasterAndData,
+        address caller
+    ) internal view override returns (bool) {
+        address feeToken = address(bytes20(paymasterAndData[4:24]));
+        _validateToken(feeToken);
+        return super._validateWithoutDelegation(paymasterAndData[24:], caller);
     }
 
     function _transferTokens(address from, IERC20 feeToken, uint256 amount) private nonReentrant whenNotPaused {

@@ -1,12 +1,13 @@
 // SPDX-License-Identifier: MIT
-pragma solidity 0.8.17;
+pragma solidity 0.8.20;
 
 import "forge-std/Test.sol";
-import "@paymasters-io/library/SignatureValidationHelper.sol";
+import "@paymasters-io/library/SignatureValidation.sol";
 import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
+import "@openzeppelin/contracts/utils/cryptography/MessageHashUtils.sol";
 
-contract TestSignatureValidationHelper is Test {
-    using ECDSA for bytes32;
+contract TestSignatureValidation is Test {
+    using MessageHashUtils for bytes32;
 
     uint256 tester1PrivateKey = 0xA11ce;
     address tester1 = vm.addr(tester1PrivateKey);
@@ -35,7 +36,7 @@ contract TestSignatureValidationHelper is Test {
     }
 
     function testExtractECDSASignatures() public {
-        (bytes memory signature1, bytes memory signature2) = SignatureValidationHelper.extractECDSASignatures(
+        (bytes memory signature1, bytes memory signature2) = SignatureValidation.extractECDSASignatures(
             getTwoSignatures()
         );
 
@@ -49,13 +50,13 @@ contract TestSignatureValidationHelper is Test {
     }
 
     function testValidateOneSignature() public {
-        address signer = SignatureValidationHelper.validateOneSignature(getOneSignature(), hash);
+        address signer = SignatureValidation.validateOneSignature(getOneSignature(), hash);
 
         assertEq(signer, tester1, "Signer should match");
     }
 
     function testValidateTwoSignatures() public {
-        (address signer1, address signer2) = SignatureValidationHelper.validateTwoSignatures(getTwoSignatures(), hash);
+        (address signer1, address signer2) = SignatureValidation.validateTwoSignatures(getTwoSignatures(), hash);
 
         assertEq(signer1, tester1, "First signer should match");
         assertEq(signer2, tester2, "Second signer should match");
@@ -66,9 +67,9 @@ contract TestSignatureValidationHelper is Test {
         uint256 expectedTotal2 = 2;
         uint256 expectedTotal3 = 0;
 
-        uint256 total1 = SignatureValidationHelper.total(getOneSignature());
-        uint256 total2 = SignatureValidationHelper.total(getTwoSignatures());
-        uint256 total3 = SignatureValidationHelper.total(abi.encodePacked(getTwoSignatures(), getOneSignature()));
+        uint256 total1 = SignatureValidation.total(getOneSignature());
+        uint256 total2 = SignatureValidation.total(getTwoSignatures());
+        uint256 total3 = SignatureValidation.total(abi.encodePacked(getTwoSignatures(), getOneSignature()));
 
         assertEq(total1, expectedTotal1, "Total for one signature should be 1");
         assertEq(total2, expectedTotal2, "Total for two signatures should be 2");

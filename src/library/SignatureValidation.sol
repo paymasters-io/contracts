@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity 0.8.17;
+pragma solidity 0.8.20;
 
 import {InvalidSignatureLength} from "@paymasters-io/library/Errors.sol";
 import {ECDSA} from "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
@@ -16,7 +16,7 @@ struct SigConfig {
     SigCount validNumOfSignatures;
 }
 
-library SignatureValidationHelper {
+library SignatureValidation {
     // extracts multisig signature
     function extractECDSASignatures(
         bytes memory _fullSignature

@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity 0.8.17;
+pragma solidity 0.8.20;
 
 import {IERC20} from "@openzeppelin/contracts/interfaces/IERC20.sol";
 
@@ -11,7 +11,7 @@ struct AccessControlSchema {
     bool useStrict;
 }
 
-library AccessControlHelper {
+library AccessControlBase {
     function getPayload(address from) public pure returns (bytes memory payload) {
         payload = new bytes(36);
         assembly {

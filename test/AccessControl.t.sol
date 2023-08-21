@@ -1,13 +1,13 @@
 // SPDX-License-Identifier: MIT
-pragma solidity 0.8.17;
+pragma solidity 0.8.20;
 
 import "forge-std/Test.sol";
-import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
-import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
-import "@paymasters-io/library/AccessControlHelper.sol";
+import "./mocks/ERC20.sol";
+import "./mocks/ERC721.sol";
+import "@paymasters-io/library/AccessControl.sol";
 
-contract TestAccessControlHelper is Test {
-    using AccessControlHelper for AccessControlSchema;
+contract TestAccessControl is Test {
+    using AccessControlBase for AccessControlSchema;
 
     ERC20 erc20;
     ERC721 erc721;
@@ -19,8 +19,8 @@ contract TestAccessControlHelper is Test {
     address tester2 = vm.addr(tester2PrivateKey);
 
     function setUp() public {
-        erc20 = new ERC20("Test Token", "TST");
-        erc721 = new ERC721("Test NFT", "TNFT");
+        erc20 = new TestERC20();
+        erc721 = new TestERC721();
         schema = AccessControlSchema({
             ERC20GateValue: 100,
             ERC20GateContract: address(erc20),
@@ -32,14 +32,14 @@ contract TestAccessControlHelper is Test {
 
     function testGetPayload() public {
         bytes memory expectedPayload = abi.encodeWithSignature("balanceOf(address)", tester1);
-        bytes memory actualPayload = AccessControlHelper.getPayload(tester1);
+        bytes memory actualPayload = AccessControlBase.getPayload(tester1);
         assertEq(expectedPayload, actualPayload, "Payloads should be equal");
     }
 
     function testERC20Gate() public {
         deal(address(erc20), tester1, 100);
-        bool result1 = AccessControlHelper.ERC20Gate(address(erc20), 100, tester1);
-        bool result2 = AccessControlHelper.ERC20Gate(address(erc20), 100, tester2);
+        bool result1 = AccessControlBase.ERC20Gate(address(erc20), 100, tester1);
+        bool result2 = AccessControlBase.ERC20Gate(address(erc20), 100, tester2);
 
         assertTrue(result1, "First result should be true");
         assertFalse(result2, "Second result should be false");
@@ -47,8 +47,8 @@ contract TestAccessControlHelper is Test {
 
     function testNFTGate() public {
         deal(address(erc721), tester1, 1);
-        bool result1 = AccessControlHelper.NFTGate(address(erc721), tester1);
-        bool result2 = AccessControlHelper.NFTGate(address(erc721), tester2);
+        bool result1 = AccessControlBase.NFTGate(address(erc721), tester1);
+        bool result2 = AccessControlBase.NFTGate(address(erc721), tester2);
 
         assertTrue(result1, "First result should be true");
         assertFalse(result2, "Second result should be false");
@@ -68,7 +68,7 @@ contract TestAccessControlHelper is Test {
         uint256 expectedValue = 42;
         bytes memory payload = abi.encodeWithSignature("getAnswer()");
         vm.expectCall(address(this), payload);
-        uint256 value = AccessControlHelper.staticCall(payload, address(this));
+        uint256 value = AccessControlBase.staticCall(payload, address(this));
 
         assertEq(value, expectedValue, "Value should match");
     }

@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.20;
 
-import "@paymasters-io/interfaces/IProxy.sol";
-import "@paymasters-io/interfaces/ISupraConsumer.sol";
+import "@paymasters-io/interfaces/oracles/IProxy.sol";
+import "@paymasters-io/interfaces/oracles/ISupraConsumer.sol";
 import "@chainlink/contracts/src/v0.8/interfaces/AggregatorV3Interface.sol";
-import "@paymasters-io/interfaces/IOracleHelper.sol";
+import "@paymasters-io/interfaces/oracles/IOracleHelper.sol";
 
 /// utility functions for price oracle
 contract OracleHelper is IOracleHelper {

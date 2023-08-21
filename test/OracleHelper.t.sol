@@ -1,11 +1,10 @@
 // SPDX-License-Identifier: MIT
-pragma solidity 0.8.17;
+pragma solidity 0.8.20;
 
 import "forge-std/Test.sol";
-import "@paymasters-io/library/OracleHelper.sol";
+import "@paymasters-io/utils/OracleHelper.sol";
 import "mocks/V3AggregatorMock.sol";
 import "mocks/SupraConsumerMock.sol";
-import "mocks/RedstoneConsumerNumericBaseMock.sol";
 import "mocks/API3ProxyMock.sol";
 
 contract TestOracleHelper is Test {
@@ -47,15 +46,6 @@ contract TestOracleHelper is Test {
         assertEq(price, expectedPrice, "Price should match");
     }
 
-    function testGetDerivedPriceFromRedstone() public {
-        input.baseProxyOrFeed = address(new MockIRedstoneConsumerNumericBase(100));
-        // uint256 expectedPrice = 50;
-        vm.expectRevert("redstone disabled");
-        input.getDerivedPrice(gasFee, Oracle.REDSTONE);
-
-        // assertEq(price, expectedPrice, "Price should match");
-    }
-
     function testGetDerivedPriceFromChainlinkInternal() public {
         uint256 expectedPrice = 50;
         uint256 price = OracleHelper.getDerivedPriceFromChainlink(
@@ -86,19 +76,6 @@ contract TestOracleHelper is Test {
             gasFee
         );
 
-        assertEq(price, expectedPrice, "Price should match");
-    }
-
-    function testGetDerivedPriceFromRedstoneInternal() public {
-        input.baseProxyOrFeed = address(new MockIRedstoneConsumerNumericBase(100));
-
-        uint256 expectedPrice = 100;
-        uint256 price = OracleHelper.getDerivedPriceFromRedstone(
-            input.baseProxyOrFeed,
-            input.baseTicker,
-            input.tokenTicker,
-            gasFee
-        );
         assertEq(price, expectedPrice, "Price should match");
     }
 }

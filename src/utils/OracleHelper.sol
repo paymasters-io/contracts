@@ -1,39 +1,19 @@
 // SPDX-License-Identifier: MIT
-pragma solidity 0.8.17;
+pragma solidity 0.8.20;
 
 import "@paymasters-io/interfaces/IProxy.sol";
 import "@paymasters-io/interfaces/ISupraConsumer.sol";
-import {PriceNotAvailable} from "@paymasters-io/library/Errors.sol";
-
-import "@paymasters-io/interfaces/IRedstoneConsumerNumericBase.sol";
 import "@chainlink/contracts/src/v0.8/interfaces/AggregatorV3Interface.sol";
-
-enum Oracle {
-    CHAINLINK,
-    REDSTONE, // disabled for now
-    SUPRAORACLE,
-    API3
-}
-
-struct OracleQueryInput {
-    address baseProxyOrFeed;
-    address tokenProxyOrFeed;
-    // feeds/tickers are of type string for supra oracle
-    string baseTicker;
-    string tokenTicker;
-}
+import "@paymasters-io/interfaces/IOracleHelper.sol";
 
 /// utility functions for price oracle
-library OracleHelper {
+contract OracleHelper is IOracleHelper {
     function getDerivedPrice(
         OracleQueryInput memory self,
         uint256 gasFee,
         Oracle oracle
     ) public view returns (uint256) {
-        if (oracle == Oracle.REDSTONE) {
-            revert("redstone disabled");
-            // return getDerivedPriceFromRedstone(self.baseProxyOrFeed, self.baseTicker, self.tokenTicker, gasFee);
-        } else if (oracle == Oracle.SUPRAORACLE) {
+        if (oracle == Oracle.SUPRAORACLE) {
             return getDerivedPriceFromSupra(self.baseProxyOrFeed, self.baseTicker, self.tokenTicker, gasFee);
         } else if (oracle == Oracle.CHAINLINK) {
             return getDerivedPriceFromChainlink(self.baseProxyOrFeed, self.tokenProxyOrFeed, gasFee);
@@ -49,23 +29,6 @@ library OracleHelper {
         (, int256 basePrice, , , ) = AggregatorV3Interface(baseFeed).latestRoundData();
         (, int256 tokenPrice, , , ) = AggregatorV3Interface(tokenFeed).latestRoundData();
         return (gasFee * uint256(basePrice)) / uint256(tokenPrice);
-    }
-
-    function getDerivedPriceFromRedstone(
-        address priceFeedContract,
-        string memory baseTicker,
-        string memory tokenTicker,
-        uint256 gasFee
-    ) public view returns (uint256) {
-        bytes32[] memory dataFeedIds = new bytes32[](2);
-        dataFeedIds[0] = bytes32(bytes(baseTicker));
-        dataFeedIds[1] = bytes32(bytes(tokenTicker));
-        uint256[] memory prices = IRedstoneConsumerNumericBase(priceFeedContract).getOracleNumericValuesFromTxMsg(
-            dataFeedIds
-        );
-        uint256 basePrice = prices[0];
-        uint256 tokenPrice = prices[1];
-        return (gasFee * basePrice) / tokenPrice;
     }
 
     function getDerivedPriceFromSupra(

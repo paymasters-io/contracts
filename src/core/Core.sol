@@ -1,7 +1,8 @@
 // SPDX-License-Identifier: MIT
-pragma solidity 0.8.17;
+pragma solidity 0.8.20;
 
 import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
+import "@openzeppelin/contracts/utils/cryptography/MessageHashUtils.sol";
 import "@paymasters-io/library/AccessControlHelper.sol";
 import "@paymasters-io/library/SignatureValidationHelper.sol";
 import "@paymasters-io/library/Errors.sol";
@@ -10,7 +11,7 @@ import "@paymasters-io/interfaces/ICore.sol";
 
 /// @notice validation and access-control impl that can be reused in any EVM or zkEVM paymaster
 abstract contract Core is ICore, Guard {
-    using ECDSA for bytes32;
+    using MessageHashUtils for bytes32;
     using AccessControlHelper for AccessControlSchema;
     using SignatureValidationHelper for bytes;
 

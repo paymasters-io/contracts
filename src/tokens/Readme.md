@@ -1,1 +1,0 @@
-Paymasters.io Utility Token

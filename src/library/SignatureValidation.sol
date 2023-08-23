@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.20;
 
-import {InvalidSignatureLength} from "@paymasters-io/library/Errors.sol";
 import {ECDSA} from "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 
 enum SigCount {
@@ -15,6 +14,8 @@ struct SigConfig {
     address verifyingSigner2;
     SigCount validNumOfSignatures;
 }
+
+error InvalidSignatureLength();
 
 library SignatureValidation {
     // extracts multisig signature

@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.20;
 
-import "@paymasters-io/library/AccessControlHelper.sol";
+import "@paymasters-io/library/AccessControl.sol";
 import "@paymasters-io/interfaces/IDelegator.sol";
 
 interface ICore is IDelegator {

@@ -2,7 +2,7 @@
 pragma solidity 0.8.20;
 
 import "@paymasters-io/interfaces/ICore.sol";
-import "@paymasters-io/library/OracleHelper.sol";
+import "@paymasters-io/utils/OracleHelper.sol";
 
 interface ITokenManager is ICore {
     function setDefaultOracle(Oracle oracle) external;

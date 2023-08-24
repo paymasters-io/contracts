@@ -13,7 +13,6 @@
         "@openzeppelin/contracts/=lib/openzeppelin-contracts/contracts/",
         "@openzeppelin/contracts-upgradeable/=lib/openzeppelin-contracts-upgradeable/contracts/",
         "@axelar/=lib/axelar-gmp-sdk-solidity/",
-        "@era/system/contracts/=lib/era-system-contracts/contracts/",
-        "@redstone-finance/contracts/=lib/redstone-oracles-monorepo/packages/evm-connector/contracts/"
+        "@era/system/contracts/=lib/era-system-contracts/contracts/"
     ]
 }

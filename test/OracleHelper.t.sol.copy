@@ -8,13 +8,12 @@ import "mocks/SupraConsumerMock.sol";
 import "mocks/API3ProxyMock.sol";
 
 contract TestOracleHelper is Test {
-    using OracleHelper for OracleQueryInput;
 
-    OracleQueryInput input;
+    OracleQuery input;
     uint256 gasFee = 100;
 
     function setUp() public {
-        input = OracleQueryInput({
+        input = OracleQuery({
             baseProxyOrFeed: address(new MockAggregatorV3Interface(100)),
             tokenProxyOrFeed: address(new MockAggregatorV3Interface(200)),
             baseTicker: "eth",

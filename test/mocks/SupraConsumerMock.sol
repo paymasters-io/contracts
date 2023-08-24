@@ -2,7 +2,7 @@
 pragma solidity 0.8.20;
 
 import "forge-std/Test.sol";
-import "@paymasters-io/interfaces/ISupraConsumer.sol";
+import "@paymasters-io/interfaces/oracles/ISupraConsumer.sol";
 
 contract MockISupraConsumer is Test, ISupraConsumer {
     int256 public price;

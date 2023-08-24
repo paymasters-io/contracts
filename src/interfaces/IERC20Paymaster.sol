@@ -5,9 +5,17 @@ import {Oracle, IERC20Metadata, IERC20, TokenInfo} from "@paymasters-io/interfac
 
 error TokenNotSupported(address token);
 error PriceMarkupOutOfBounds(uint256 upper, uint256 lower);
+error TokenNotSpecified();
 
 interface IERC20PaymastersIo {
-    event UserOperationSponsored(address indexed user, uint256 actualTokenNeeded, uint256 actualGasCost);
+    event UserOperationSponsored(
+        address indexed user,
+        uint256 actualTokenCharge,
+        uint256 actualGasCost,
+        uint256 actualTokenPrice
+    );
+
+    event PostOpReverted(address indexed user, uint256 preCharge);
 
     event OracleChanged(Oracle newOracle);
 

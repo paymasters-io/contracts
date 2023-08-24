@@ -1,6 +1,6 @@
 {
     "name": "contracts",
-    "version": "0.0.0",
+    "version": "1.0.0",
     "description": "EIP4337 paymaster contracts",
     "main": "index.js",
     "scripts": {

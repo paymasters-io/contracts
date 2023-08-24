@@ -1,39 +1,65 @@
+// SPDX-License-Identifier: MIT
+pragma solidity 0.8.20;
+
+import "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
+
 enum Oracle {
     CHAINLINK,
-    SUPRAORACLE,
+    SUPRA,
     API3
 }
 
-struct OracleQueryInput {
-    address baseProxyOrFeed;
-    address tokenProxyOrFeed;
-    string baseTicker;
-    string tokenTicker;
+struct OracleQuery {
+    IERC20Metadata base;
+    IERC20Metadata token;
 }
 
-interface IOracleHelper {
-    function getDerivedPrice(
-        OracleQueryInput memory self,
-        uint256 gasFee,
-        Oracle oracle
-    ) external view returns (uint256);
+struct TokenInfo {
+    address proxyOrFeed;
+    string ticker;
+    uint256 priceMarkup;
+    uint248 priceMaxAge;
+    uint8 decimals;
+}
 
-    function getDerivedPriceFromChainlink(
+struct Cache {
+    uint192 price;
+    uint96 timestamp;
+    uint96 updateThreshold;
+    uint128 ttl;
+}
+
+error PriceIsZeroOrLess(uint256 a, uint256 b);
+error UnknownTokenPair(IERC20Metadata base, IERC20Metadata token);
+
+interface IOracleHelper {
+    event TokenPriceUpdated(
+        address indexed tokenAddress,
+        uint256 currentPrice,
+        uint256 previousPrice,
+        uint256 cachedPriceTimestamp
+    );
+
+    function getNativeToken() external view returns (TokenInfo memory);
+
+    function updatePrice(OracleQuery memory self, Oracle oracle) external;
+
+    function getPriceFromChainlink(
         address baseFeed,
         address tokenFeed,
-        uint256 gasFee
+        uint256 decimals
     ) external view returns (uint256);
 
-    function getDerivedPriceFromSupra(
+    function getPriceFromSupra(
         address priceFeed,
         string memory baseTicker,
         string memory tokenTicker,
-        uint256 gasFee
+        uint256 decimals
     ) external view returns (uint256);
 
-    function getDerivedPriceFromAPI3(
+    function getPriceFromAPI3DAO(
         address baseProxy,
         address tokenProxy,
-        uint256 gasFee
+        uint256 decimals
     ) external view returns (uint256);
 }

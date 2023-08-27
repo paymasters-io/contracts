@@ -33,12 +33,12 @@ contract RebateModule is BaseModule {
         return true;
     }
 
-    function _postValidate(bytes calldata context, uint256 actualGasCost) internal virtual override {
-        (uint256 gasUsed, address user) = abi.decode(context, (uint256, address));
-        uint256 gasRebate = gasUsed - actualGasCost;
+    function _postValidate(bytes calldata context, uint256 /** */) internal virtual override {
+        (uint256 valueProvided, address user) = abi.decode(context, (uint256, address));
+        uint256 gasRebate = (valueProvided * rebate) / 100;
         if (gasRebate > 0) {
-            uint256 rebateAmount = gasRebate * rebate;
-            rebateToken.transfer(user, rebateAmount);
+            bool success = rebateToken.transfer(user, gasRebate);
+            require(success, "RebateModule: failed to transfer rebate");
         }
     }
 

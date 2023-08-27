@@ -1,49 +1,81 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.20;
 
-abstract contract BaseModule {
-    address public immutable paymaster;
+import "@paymasters-io/interfaces/IModule.sol";
+import "@paymasters-io/interfaces/IModularPaymaster.sol";
 
-    error NotAuthorized(address sender);
+abstract contract BaseModule is IModule {
+    IModularPaymaster public immutable paymaster;
+    address public immutable manager;
 
-    constructor(address _paymaster, address _vaa, bool _requiresVaaSig) {
-        // _paymaster.registerModule(_vaa, _requiresVaaSig);
-        paymaster = _paymaster;
+    constructor(address _paymaster, address _manager, bool _requireSig) {
+        paymaster = IModularPaymaster(_paymaster);
+        manager = _manager;
+        _register(_manager, _requireSig);
     }
 
-    modifier onlyPaymastersIo() {
-        if (msg.sender != paymaster) {
-            revert NotAuthorized(msg.sender);
-        }
+    modifier onlyPaymaster() {
+        if (msg.sender != address(paymaster)) revert NotAuthorized(msg.sender);
         _;
     }
 
-    // funds the verifying paymaster
-    function stake() external payable virtual;
+    modifier onlyManager() {
+        if (msg.sender != manager) revert NotAuthorized(msg.sender);
+        _;
+    }
 
-    // defunds the verifying paymaster
-    function unstake(uint256 amount) external virtual;
+    function getDeposit() external view returns (uint256) {
+        return paymaster.balanceOf(address(this));
+    }
 
-    // withdraws the balances from this module
-    function withdraw() external virtual;
+    function deposit() external payable {
+        if (msg.value < 1e16) revert DepositAmountTooLow(msg.value);
+        paymaster.depositFromModule{value: msg.value}();
+    }
 
-    // returns the stake of the user
-    function getStake(address user) external view virtual returns (uint256);
+    function deposit(uint256 amount) external onlyManager {
+        uint256 balance = address(this).balance;
+        if (balance < amount) revert InsufficientFunds(balance, amount);
+        paymaster.depositFromModule{value: balance}();
+    }
 
-    // used to validate the user operation.
-    // called by paymaster.io
-    function validate(bytes calldata paymasterAndData, address user) external view virtual returns (bool);
+    function withdrawFromPaymaster(uint256 amount) external onlyManager {
+        paymaster.withdrawToModule(amount);
+    }
 
-    // post operation hook
-    // called by paymaster.io
-    function postValidate(bytes calldata context, uint256 actualGasCost, address user) external virtual;
+    function withdraw(uint256 amount, address receiver) external onlyManager {
+        if (receiver == address(0)) revert NullReceiver();
+        uint256 balance = address(this).balance;
+        if (balance < amount) revert InsufficientFunds(balance, amount);
+        (bool sent, ) = receiver.call{value: amount}("");
+        if (!sent) revert FailedToWithdrawEth(receiver, amount);
+    }
 
-    // internal function that must be overidden by the inheriting module
+    function register(bool requireSig) public returns (address module) {
+        module = _register(manager, requireSig);
+    }
+
+    function deRegister() external onlyManager returns (address module) {
+        module = paymaster.deregisterModule();
+        if (module != address(this)) revert FailedToDeRegisterModule(address(this));
+    }
+
+    function validate(bytes calldata paymasterAndData, address user) external view onlyPaymaster returns (bool) {
+        return _validate(paymasterAndData, user);
+    }
+
+    function postValidate(bytes calldata context, uint256 actualGasCost) external onlyPaymaster {
+        _postValidate(context, actualGasCost);
+    }
+
+    function _register(address _manager, bool _requireSig) internal onlyManager returns (address module) {
+        module = paymaster.registerModule(_manager, _requireSig);
+        if (module != address(this)) revert FailedToRegisterModule(address(this));
+    }
+
     function _validate(bytes calldata paymasterAndData, address user) internal view virtual returns (bool);
 
-    // internal function that must be overidden by the inheriting module
-    function _postValidate(bytes calldata context, uint256 actualGasCost, address user) internal virtual;
+    function _postValidate(bytes calldata context, uint256 actualGasCost) internal virtual;
 
-    // fallback to receive ether
     receive() external payable virtual;
 }

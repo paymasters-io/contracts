@@ -2,7 +2,7 @@
 pragma solidity 0.8.20;
 
 import "@chainlink/contracts/src/v0.8/interfaces/AggregatorV3Interface.sol";
-import "@paymasters-io/interfaces/oracles/IProxy.sol";
+import "@paymasters-io/interfaces/oracles/IAPI3Proxy.sol";
 import "@paymasters-io/interfaces/oracles/ISupraConsumer.sol";
 import "@paymasters-io/interfaces/oracles/IOracleHelper.sol";
 
@@ -26,7 +26,11 @@ contract OracleHelper is AbstractStore, IOracleHelper {
         return _tokenInfo[native];
     }
 
-    function updatePrice(OracleQuery memory query, Oracle _oracle, bool force) public returns (uint256) {
+    function updatePrice(
+        OracleQuery memory query,
+        Oracle _oracle,
+        bool force
+    ) public returns (uint256) {
         Cache memory cache = _cache[query.token];
         uint256 cacheAge = block.timestamp - cache.timestamp;
         if (!force && cacheAge <= ttl) {
@@ -67,13 +71,21 @@ contract OracleHelper is AbstractStore, IOracleHelper {
         address tokenFeed,
         uint256 decimals
     ) public view returns (uint256) {
-        (uint80 roundId, int256 basePrice, , uint256 updatedAt, uint80 answeredInRound) = AggregatorV3Interface(
-            baseFeed
-        ).latestRoundData();
+        (
+            uint80 roundId,
+            int256 basePrice,
+            ,
+            uint256 updatedAt,
+            uint80 answeredInRound
+        ) = AggregatorV3Interface(baseFeed).latestRoundData();
         _requiresAnswerInRound(roundId, updatedAt, answeredInRound);
-        (uint80 tRoundId, int256 tokenPrice, , uint256 tUpdatedAt, uint80 tAnsweredInRound) = AggregatorV3Interface(
-            tokenFeed
-        ).latestRoundData();
+        (
+            uint80 tRoundId,
+            int256 tokenPrice,
+            ,
+            uint256 tUpdatedAt,
+            uint80 tAnsweredInRound
+        ) = AggregatorV3Interface(tokenFeed).latestRoundData();
         _requiresAnswerInRound(tRoundId, tUpdatedAt, tAnsweredInRound);
         _requiresPriceGreaterThanZero(uint(basePrice), uint(tokenPrice));
         return (decimals * uint256(basePrice)) / uint256(tokenPrice);
@@ -96,13 +108,17 @@ contract OracleHelper is AbstractStore, IOracleHelper {
         address tokenProxy,
         uint256 decimals
     ) public view returns (uint256) {
-        (int224 basePrice, ) = IProxy(baseProxy).read();
-        (int224 tokenPrice, ) = IProxy(tokenProxy).read();
+        (int224 basePrice, ) = IAPI3Proxy(baseProxy).read();
+        (int224 tokenPrice, ) = IAPI3Proxy(tokenProxy).read();
         _requiresPriceGreaterThanZero(uint224(basePrice), uint224(tokenPrice));
         return (decimals * uint224(basePrice)) / uint224(tokenPrice);
     }
 
-    function _requiresAnswerInRound(uint80 roundId, uint256 updatedAt, uint80 answeredInRound) internal view {
+    function _requiresAnswerInRound(
+        uint80 roundId,
+        uint256 updatedAt,
+        uint80 answeredInRound
+    ) internal view {
         uint256 two_four_hours = block.timestamp - 60 * 60 * 24 * 2;
         if (updatedAt < two_four_hours || answeredInRound < roundId) revert StalePrice();
     }
@@ -111,7 +127,11 @@ contract OracleHelper is AbstractStore, IOracleHelper {
         if (a <= 0 || b <= 0) revert PriceIsZeroOrLess(a, b);
     }
 
-    function _requiresValidDecimalsForPair(OracleQuery memory self, uint256 a, uint256 b) internal pure {
+    function _requiresValidDecimalsForPair(
+        OracleQuery memory self,
+        uint256 a,
+        uint256 b
+    ) internal pure {
         if (a < 6 || b < 6) revert UnknownTokenPair(self.base, self.token);
     }
 

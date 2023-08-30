@@ -1,7 +1,7 @@
 {
     "filter_paths": "(lib/|test/)",
     "exclude_low": false,
-    "foundry_ignore_compile": true,
+    "foundry_ignore_compile": false,
     "exclude_informational": false,
     "solc_disable_warnings": true,
     "solc_remaps": [

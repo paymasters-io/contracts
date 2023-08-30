@@ -8,24 +8,23 @@ import "@paymasters-io/utils/Human.sol";
 /// can support more use cases such as:
 /// - require user to be a real human verified with worldId
 contract HumanVerifiedModule is BaseModule, Human {
-    bool public immutable requireSig;
-
     constructor(
         IWorldID _worldId,
         string memory _appId,
         string memory _action,
         address _paymaster,
-        address _manager,
-        bool _requireSig
-    ) BaseModule(_paymaster, _manager, _requireSig) Human(_worldId, _appId, _action) {
-        requireSig = _requireSig;
+        address _moduleAttester,
+        address _manager
+    ) BaseModule(_paymaster, _moduleAttester, _manager) Human(_worldId, _appId, _action) {}
+
+    function register() external payable override returns (address) {
+        return super.register(true);
     }
 
-    function register() external override returns (address) {
-        return super.register(requireSig);
-    }
-
-    function _validate(bytes calldata paymasterAndData, address /** */) internal view virtual override returns (bool) {
+    function _validate(
+        bytes calldata paymasterAndData,
+        address /** */
+    ) internal view virtual override returns (bool) {
         (address signal, uint256 root, uint256 nullifierHash, uint256[8] memory proof) = abi.decode(
             paymasterAndData,
             (address, uint256, uint256, uint256[8])

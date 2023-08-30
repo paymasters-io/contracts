@@ -13,20 +13,18 @@ import "@paymasters-io/modules/BaseModule.sol";
 /// - require user to have a certain amount of nft and to be human verified with worldId
 contract NFTGateModule is BaseModule {
     IERC721 public immutable erc721Token;
-    bool public immutable requireSig;
 
     constructor(
         IERC721 _token,
         address _paymaster,
-        address _manager,
-        bool _requireSig
-    ) BaseModule(_paymaster, _manager, _requireSig) {
+        address _moduleAttester,
+        address _manager
+    ) BaseModule(_paymaster, _moduleAttester, _manager) {
         erc721Token = _token;
-        requireSig = _requireSig;
     }
 
-    function register() external override returns (address) {
-        return super.register(requireSig);
+    function register() external payable override returns (address) {
+        return super.register(true);
     }
 
     function _validate(
@@ -37,7 +35,10 @@ contract NFTGateModule is BaseModule {
         return balance >= 1;
     }
 
-    function _postValidate(bytes calldata context, uint256 actualGasCost) internal virtual override {}
+    function _postValidate(
+        bytes calldata context,
+        uint256 actualGasCost
+    ) internal virtual override {}
 
     receive() external payable virtual override {}
 }

@@ -27,7 +27,7 @@ interface IModule {
     function withdraw(uint256 amount, address receiver) external;
 
     // registers module on paymaster
-    function register() external returns (address);
+    function register() external payable returns (address);
 
     // deregisters module on paymaster
     function deRegister() external returns (address);

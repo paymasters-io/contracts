@@ -15,22 +15,19 @@ contract ERC20GateModule is BaseModule {
     IERC20 public immutable erc20Token;
     uint256 public immutable minAmount;
 
-    bool public immutable requireSig;
-
     constructor(
         IERC20 _token,
         uint256 _minAmount,
         address _paymaster,
-        address _manager,
-        bool _requireSig
-    ) BaseModule(_paymaster, _manager, _requireSig) {
+        address _moduleAttester,
+        address _manager
+    ) BaseModule(_paymaster, _moduleAttester, _manager) {
         erc20Token = _token;
         minAmount = _minAmount;
-        requireSig = _requireSig;
     }
 
-    function register() external override returns (address) {
-        return super.register(requireSig);
+    function register() external payable override returns (address) {
+        return super.register(true);
     }
 
     function _validate(
@@ -41,7 +38,10 @@ contract ERC20GateModule is BaseModule {
         return balance >= minAmount;
     }
 
-    function _postValidate(bytes calldata context, uint256 actualGasCost) internal virtual override {}
+    function _postValidate(
+        bytes calldata context,
+        uint256 actualGasCost
+    ) internal virtual override {}
 
     receive() external payable virtual override {}
 }

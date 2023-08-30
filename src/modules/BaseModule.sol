@@ -2,17 +2,19 @@
 pragma solidity 0.8.20;
 
 import "@paymasters-io/interfaces/IModule.sol";
+import "@paymasters-io/interfaces/IModuleAttestations.sol";
 import "@paymasters-io/interfaces/IModularPaymaster.sol";
 import "@paymasters-io/utils/Semver.sol";
 
 abstract contract BaseModule is Semver, IModule {
     IModularPaymaster immutable paymaster;
+    IModuleAttestations immutable moduleAttester;
     address immutable manager;
 
-    constructor(address _paymaster, address _manager, bool _requireSig) Semver(1, 0, 0) {
+    constructor(address _paymaster, address _moduleAttester, address _manager) Semver(1, 0, 0) {
         paymaster = IModularPaymaster(_paymaster);
+        moduleAttester = IModuleAttestations(_moduleAttester);
         manager = _manager;
-        _register(_manager, _requireSig);
     }
 
     modifier onlyPaymaster() {
@@ -44,6 +46,10 @@ abstract contract BaseModule is Semver, IModule {
         paymaster.withdrawToModule(amount);
     }
 
+    function withdrawFromModuleAttester() external onlyManager {
+        moduleAttester.withdrawFeeOnSuccess();
+    }
+
     function withdraw(uint256 amount, address receiver) external onlyManager {
         if (receiver == address(0)) revert NullReceiver();
         uint256 balance = address(this).balance;
@@ -52,7 +58,7 @@ abstract contract BaseModule is Semver, IModule {
         if (!sent) revert FailedToWithdrawEth(receiver, amount);
     }
 
-    function register(bool requireSig) public returns (address module) {
+    function register(bool requireSig) public payable returns (address module) {
         module = _register(manager, requireSig);
     }
 
@@ -76,8 +82,13 @@ abstract contract BaseModule is Semver, IModule {
         address _manager,
         bool _requireSig
     ) internal onlyManager returns (address module) {
+        uint256 fee = moduleAttester.getAttestationFee();
+        address self = address(this);
+        if (msg.value < fee) revert InsufficientFunds(msg.value, fee);
+        bool succcess = moduleAttester.applyForAttestations{value: msg.value}();
+        if (!succcess) revert FailedToRegisterModule(self);
         module = paymaster.registerModule(_manager, _requireSig);
-        if (module != address(this)) revert FailedToRegisterModule(address(this));
+        if (module != self) revert FailedToRegisterModule(self);
     }
 
     function _validate(

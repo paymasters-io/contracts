@@ -2,9 +2,9 @@
 pragma solidity 0.8.20;
 
 import "forge-std/Test.sol";
-import "@paymasters-io/interfaces/oracles/IProxy.sol";
+import "@paymasters-io/interfaces/oracles/IAPI3Proxy.sol";
 
-contract MockIProxy is Test, IProxy {
+contract MockIProxy is Test, IAPI3Proxy {
     int224 public value;
 
     constructor(int224 _value) {

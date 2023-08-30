@@ -15,14 +15,14 @@ contract RebateModule is BaseModule {
         IERC20 _token,
         uint256 _rebate,
         address _paymaster,
-        address _manager,
-        bool _requireSig
-    ) BaseModule(_paymaster, _manager, _requireSig) {
+        address _moduleAttester,
+        address _manager
+    ) BaseModule(_paymaster, _moduleAttester, _manager) {
         rebate = _rebate;
         rebateToken = _token;
     }
 
-    function register() external override returns (address) {
+    function register() external payable override returns (address) {
         return super.register(true);
     }
 

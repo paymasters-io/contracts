@@ -30,12 +30,12 @@ contract HumanVerifiedModule is BaseModule, Human {
             paymasterAndData,
             (address, uint256, uint256, uint256[8])
         );
-        return isHuman(signal, root, nullifierHash, proof);
+        return humanityCheck(signal, root, nullifierHash, proof);
     }
 
     function _postValidate(bytes calldata context, uint256 /** */) internal virtual override {
         uint256 nullifierHash = abi.decode(context, (uint256));
-        _afterValidation(nullifierHash);
+        _afterHumanityCheck(nullifierHash);
     }
 
     receive() external payable virtual override {}

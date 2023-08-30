@@ -9,3 +9,4 @@ mocks/=test/mocks/
 @axelar/=lib/axelar-gmp-sdk-solidity/
 @era/system/contracts/=lib/era-system-contracts/contracts/
 @redstone-finance/contracts/=lib/redstone-oracles-monorepo/packages/evm-connector/contracts/
+@eas/contracts/=lib/eas-contracts/contracts/

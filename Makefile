@@ -12,8 +12,6 @@ install :; @forge install foundry-rs/forge-std eth-infinitism/account-abstractio
 
 update:; @forge update
 
-update-needed:; @forge update lib/redstone-oracles-monorepo
-
 build:; @forge build --build-info --sizes
 
 test :; @forge test --gas-report -vvv

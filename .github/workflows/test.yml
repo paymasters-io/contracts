@@ -35,7 +35,7 @@ jobs:
 
             - name: Run Forge update
               run: |
-                  make update-needed
+                  make update
               id: update
 
             - name: Run Forge build

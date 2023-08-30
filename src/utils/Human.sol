@@ -31,7 +31,7 @@ contract Human {
     /// @param root The root (returned by the IDKit widget).
     /// @param nullifierHash The nullifier hash for this proof, preventing double signaling (returned by the IDKit widget).
     /// @param proof The zero-knowledge proof that demonstrates the claimer is registered with World ID (returned by the IDKit widget).
-    function isHuman(
+    function humanityCheck(
         address signal,
         uint256 root,
         uint256 nullifierHash,
@@ -52,7 +52,7 @@ contract Human {
         human = true;
     }
 
-    function _afterValidation(uint256 nullifierHash) internal virtual {
+    function _afterHumanityCheck(uint256 nullifierHash) internal virtual {
         nullifierHashes[nullifierHash] = true;
     }
 }

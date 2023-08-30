@@ -3,12 +3,13 @@ pragma solidity 0.8.20;
 
 import "@paymasters-io/interfaces/IModule.sol";
 import "@paymasters-io/interfaces/IModularPaymaster.sol";
+import "@paymasters-io/utils/Semver.sol";
 
-abstract contract BaseModule is IModule {
-    IModularPaymaster public immutable paymaster;
-    address public immutable manager;
+abstract contract BaseModule is Semver, IModule {
+    IModularPaymaster immutable paymaster;
+    address immutable manager;
 
-    constructor(address _paymaster, address _manager, bool _requireSig) {
+    constructor(address _paymaster, address _manager, bool _requireSig) Semver(1, 0, 0) {
         paymaster = IModularPaymaster(_paymaster);
         manager = _manager;
         _register(_manager, _requireSig);
@@ -60,7 +61,10 @@ abstract contract BaseModule is IModule {
         if (module != address(this)) revert FailedToDeRegisterModule(address(this));
     }
 
-    function validate(bytes calldata paymasterAndData, address user) external view onlyPaymaster returns (bool) {
+    function validate(
+        bytes calldata paymasterAndData,
+        address user
+    ) external view onlyPaymaster returns (bool) {
         return _validate(paymasterAndData, user);
     }
 
@@ -68,12 +72,18 @@ abstract contract BaseModule is IModule {
         _postValidate(context, actualGasCost);
     }
 
-    function _register(address _manager, bool _requireSig) internal onlyManager returns (address module) {
+    function _register(
+        address _manager,
+        bool _requireSig
+    ) internal onlyManager returns (address module) {
         module = paymaster.registerModule(_manager, _requireSig);
         if (module != address(this)) revert FailedToRegisterModule(address(this));
     }
 
-    function _validate(bytes calldata paymasterAndData, address user) internal view virtual returns (bool);
+    function _validate(
+        bytes calldata paymasterAndData,
+        address user
+    ) internal view virtual returns (bool);
 
     function _postValidate(bytes calldata context, uint256 actualGasCost) internal virtual;
 

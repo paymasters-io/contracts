@@ -8,6 +8,7 @@ error NotAuthorized(address sender);
 error FailedToRegisterModule(address module);
 error FailedToDeRegisterModule(address module);
 error NullReceiver();
+error NullProxy();
 
 interface IModule {
     // returns deposit in paymaster

@@ -15,7 +15,6 @@ struct Attestations {
     uint192 attestationCount; // excludes revocations
     uint64 timestamp;
     uint256 fee;
-    bytes32[] uids; // includes revocations
     AttestationStatus attestationStatus;
 }
 
@@ -39,13 +38,11 @@ interface IModuleAttestations {
 
     function removeAttesters(address[] calldata attesters) external;
 
-    function setAttestationConfig(uint8 threshold, uint64 markup, uint256 fee) external;
+    function setAttestationConfig(uint8 threshold, uint256 fee) external;
 
     function getAttestationFee() external view returns (uint256);
 
     function attestationResolved(address module) external view returns (bool);
-
-    function withdrawFeeOnSuccess() external;
 
     function claimAttestersCut(address module, bytes32 uid) external;
 

@@ -2,7 +2,7 @@
 pragma solidity 0.8.20;
 
 import "@openzeppelin/contracts/access/Ownable.sol";
-import {SchemaResolver} from "@eas/contracts/resolver/SchemaResolver.sol";
+import {SchemaResolver, AccessDenied} from "@eas/contracts/resolver/SchemaResolver.sol";
 import {IEAS} from "@eas/contracts/IEAS.sol";
 import "@paymasters-io/interfaces/IModuleAttestations.sol";
 import {FailedToWithdrawEth} from "@paymasters-io/interfaces/IModule.sol";
@@ -16,10 +16,9 @@ contract ModuleAttestations is SchemaResolver, Ownable, IModuleAttestations {
 
     mapping(address => bool) _validAttesters; // attester => valid
     mapping(address => Attestations) _attestations; // module => attestation
-    mapping(address => mapping(address => bool)) _attested; // attester => module => attested
+    mapping(address => mapping(address => bytes32)) _attested; // attester => module => uid
 
     uint64 constant UNLOCK_DELAY = 1 days;
-    uint64 _attestersMarkup = 1.5e5; // 15%
     uint8 _threshold = 3; // 3 attesters
     uint256 _registrationFee = 2.5e16; // 0.025 ether
 
@@ -64,29 +63,19 @@ contract ModuleAttestations is SchemaResolver, Ownable, IModuleAttestations {
         }
     }
 
-    function setAttestationConfig(uint8 threshold, uint64 markup, uint256 fee) external onlyOwner {
+    function setAttestationConfig(uint8 threshold, uint256 fee) external onlyOwner {
         _threshold = threshold;
         _registrationFee = fee;
-        _attestersMarkup = markup;
     }
 
     function attestationResolved(address module) external view returns (bool) {
         if (module == address(0)) return false;
         Attestations memory atts = _attestations[module];
-        return _onlyUnlocked(atts);
+        return _requireUnlocked(atts);
     }
 
     function getAttestationFee() external view returns (uint256) {
         return _registrationFee;
-    }
-
-    function withdrawFeeOnSuccess() external {
-        Attestations memory atts = _attestations[msg.sender];
-        if (!_onlyUnlocked(atts)) revert NotUnlocked();
-        uint256 totalCut = (atts.uids.length * (atts.fee * _attestersMarkup)) / 1e6;
-        uint256 fee = atts.fee - totalCut;
-        (bool success, ) = msg.sender.call{value: fee}("");
-        if (!success) revert FailedToWithdrawEth(msg.sender, fee);
     }
 
     function claimAttestersCut(address module, bytes32 uid) external onlyValidAttester(msg.sender) {
@@ -136,31 +125,14 @@ contract ModuleAttestations is SchemaResolver, Ownable, IModuleAttestations {
 
     function _claimCut(address module, bytes32 uid) internal returns (uint256 cut) {
         Attestations memory atts = _attestations[module];
-        if (!_onlyUnlocked(atts)) revert NotUnlocked();
-        int256 uidIndex = _getUIDIndex(atts.uids, uid);
-        if (uidIndex < 0) revert AccessDenied();
-        _deleteUIDByIndex(uint256(uidIndex), module, atts.uids[atts.uids.length - 1]);
-        cut = (atts.fee * _attestersMarkup) / 1e6;
-
-        Attestation memory attestation = _eas.getAttestation(uid);
-        if (attestation.attester != msg.sender) revert NotTheAttester(msg.sender, attestation.uid);
+        cut = atts.fee / uint256(_threshold);
+        if (_attested[msg.sender][module] != uid) revert NotTheAttester(msg.sender, uid);
+        delete _attested[msg.sender][module];
+        if (!_requireUnlocked(atts)) revert NotUnlocked();
+        if (module == address(0) || uid == bytes32(0)) revert AccessDenied();
     }
 
-    function _getUIDIndex(bytes32[] memory uids, bytes32 uid) internal pure returns (int256) {
-        for (uint256 i = 0; i < uids.length; i++) {
-            if (uids[i] == uid) {
-                return int256(i);
-            }
-        }
-        return -1;
-    }
-
-    function _deleteUIDByIndex(uint256 index, address module, bytes32 uid) internal {
-        _attestations[module].uids[index] = uid;
-        _attestations[module].uids.pop();
-    }
-
-    function _onlyUnlocked(Attestations memory atts) internal view returns (bool) {
+    function _requireUnlocked(Attestations memory atts) internal view returns (bool) {
         bool unlocked = atts.attestationStatus == AttestationStatus.Approved &&
             block.timestamp - atts.timestamp > UNLOCK_DELAY;
 
@@ -177,17 +149,16 @@ contract ModuleAttestations is SchemaResolver, Ownable, IModuleAttestations {
             (bytes32, address, address, bool, bool)
         );
         Attestations memory atts = _attestations[module];
-        bool attested = _attested[attestation.attester][module];
-        uint8 threshold = _threshold;
-        if (attested) return false;
+        uint192 threshold = uint192(_threshold);
+        if (_attested[attestation.attester][module] == bytes32(0)) return false;
         if (!verified || !safe || module == address(0)) return false;
         if (atts.attestationStatus == AttestationStatus.Rejected) return false;
         if (atts.attestationStatus == AttestationStatus.None) {
             _attestations[module].attestationStatus = AttestationStatus.Pending;
         }
         _attestations[module].attestationCount++;
-        if (atts.attestationCount <= threshold) {
-            _attested[attestation.attester][module] = true;
+        if (atts.attestationCount < threshold) {
+            _attested[attestation.attester][module] = attestation.uid;
         }
         if (
             atts.attestationCount >= threshold &&
@@ -196,7 +167,6 @@ contract ModuleAttestations is SchemaResolver, Ownable, IModuleAttestations {
             _attestations[module].attestationStatus = AttestationStatus.Approved;
             _attestations[module].timestamp = uint64(block.timestamp);
         }
-        _attestations[module].uids.push(attestation.uid);
         return true;
     }
 
@@ -212,7 +182,6 @@ contract ModuleAttestations is SchemaResolver, Ownable, IModuleAttestations {
         if (_attestations[module].attestationStatus != AttestationStatus.Rejected) {
             _attestations[module].attestationStatus = AttestationStatus.Rejected;
         }
-        _attestations[module].attestationCount--;
         return true;
     }
 }

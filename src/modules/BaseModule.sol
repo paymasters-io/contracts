@@ -46,10 +46,6 @@ abstract contract BaseModule is Semver, IModule {
         paymaster.withdrawToModule(amount);
     }
 
-    function withdrawFromModuleAttester() external onlyManager {
-        moduleAttester.withdrawFeeOnSuccess();
-    }
-
     function withdraw(uint256 amount, address receiver) external onlyManager {
         if (receiver == address(0)) revert NullReceiver();
         uint256 balance = address(this).balance;
@@ -85,8 +81,8 @@ abstract contract BaseModule is Semver, IModule {
         uint256 fee = moduleAttester.getAttestationFee();
         address self = address(this);
         if (msg.value < fee) revert InsufficientFunds(msg.value, fee);
-        bool succcess = moduleAttester.applyForAttestations{value: msg.value}();
-        if (!succcess) revert FailedToRegisterModule(self);
+        bool success = moduleAttester.applyForAttestations{value: msg.value}();
+        if (!success) revert FailedToRegisterModule(self);
         module = paymaster.registerModule(_manager, _requireSig);
         if (module != self) revert FailedToRegisterModule(self);
     }

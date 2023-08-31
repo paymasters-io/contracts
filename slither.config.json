@@ -11,8 +11,7 @@
         "@aa/=lib/account-abstraction/",
         "@chainlink/=lib/chainlink-brownie-contracts/",
         "@openzeppelin/contracts/=lib/openzeppelin-contracts/contracts/",
-        "@openzeppelin/contracts-upgradeable/=lib/openzeppelin-contracts-upgradeable/contracts/",
-        "@axelar/=lib/axelar-gmp-sdk-solidity/",
+        "@eas/contracts/=lib/eas-contracts/contracts/",
         "@era/system/contracts/=lib/era-system-contracts/contracts/"
     ]
 }

@@ -12,7 +12,7 @@ import "@aa/contracts/interfaces/IEntryPoint.sol";
 import "@paymasters-io/utils/OracleHelper.sol";
 import "@paymasters-io/interfaces/IERC20Paymaster.sol";
 
-/// @notice Based on eth-infinitism 'TokenPaymaster'
+/// @notice Adapted from eth-infinitism 'TokenPaymaster' and pimlico 'ERC20Paymaster'
 contract ERC20PaymastersIo is BasePaymaster, OracleHelper, IERC20PaymastersIo {
     using SafeERC20 for IERC20;
 
@@ -38,11 +38,18 @@ contract ERC20PaymastersIo is BasePaymaster, OracleHelper, IERC20PaymastersIo {
     }
 
     function addToken(IERC20Metadata token, TokenInfo memory tokenInfo) external onlyOwner {
-        if (tokenInfo.priceMarkup > 2 * PRICE_DENOMINATOR || tokenInfo.priceMarkup < PRICE_DENOMINATOR)
-            revert PriceMarkupOutOfBounds(tokenInfo.priceMarkup, PRICE_DENOMINATOR);
+        if (
+            tokenInfo.priceMarkup > 2 * PRICE_DENOMINATOR ||
+            tokenInfo.priceMarkup < PRICE_DENOMINATOR
+        ) revert PriceMarkupOutOfBounds(tokenInfo.priceMarkup, PRICE_DENOMINATOR);
         tokenInfo.decimals = token.decimals();
         _tokenInfo[token] = tokenInfo;
-        emit TokenAdded(address(token), tokenInfo.proxyOrFeed, tokenInfo.priceMarkup, tokenInfo.priceMaxAge);
+        emit TokenAdded(
+            address(token),
+            tokenInfo.proxyOrFeed,
+            tokenInfo.priceMarkup,
+            tokenInfo.priceMaxAge
+        );
     }
 
     function removeToken(IERC20Metadata token) external onlyOwner {
@@ -80,7 +87,8 @@ contract ERC20PaymastersIo is BasePaymaster, OracleHelper, IERC20PaymastersIo {
             Cache memory cache = _cache[token];
 
             uint256 preChargeNative = requiredPreFund + (REFUND_POSTOP_COST * userOp.maxFeePerGas);
-            uint256 cachedPriceWithMarkup = (cache.price * PRICE_DENOMINATOR) / tokenInfo.priceMarkup;
+            uint256 cachedPriceWithMarkup = (cache.price * PRICE_DENOMINATOR) /
+                tokenInfo.priceMarkup;
             uint256 tokenAmount = (preChargeNative * PRICE_DENOMINATOR) / cachedPriceWithMarkup;
             SafeERC20.safeTransferFrom(token, userOp.sender, address(this), tokenAmount);
 
@@ -91,11 +99,19 @@ contract ERC20PaymastersIo is BasePaymaster, OracleHelper, IERC20PaymastersIo {
                 userOp.sender,
                 address(token)
             );
-            validationResult = _packValidationData(false, uint48(cache.timestamp + tokenInfo.priceMaxAge), 0);
+            validationResult = _packValidationData(
+                false,
+                uint48(cache.timestamp + tokenInfo.priceMaxAge),
+                0
+            );
         }
     }
 
-    function _postOp(PostOpMode mode, bytes calldata context, uint256 actualGasCost) internal override {
+    function _postOp(
+        PostOpMode mode,
+        bytes calldata context,
+        uint256 actualGasCost
+    ) internal override {
         unchecked {
             (
                 uint256 preCharge,
@@ -119,17 +135,29 @@ contract ERC20PaymastersIo is BasePaymaster, OracleHelper, IERC20PaymastersIo {
             }
 
             uint256 _cachedPrice = updatePrice(OracleQuery(native, token), oracle, false);
-            uint256 cachedPriceWithMarkup = (_cachedPrice * PRICE_DENOMINATOR) / tokenInfo.priceMarkup;
+            uint256 cachedPriceWithMarkup = (_cachedPrice * PRICE_DENOMINATOR) /
+                tokenInfo.priceMarkup;
             uint256 actualChargeNative = actualGasCost + REFUND_POSTOP_COST * gasPrice;
-            uint256 actualTokenNeeded = (actualChargeNative * PRICE_DENOMINATOR) / cachedPriceWithMarkup;
+            uint256 actualTokenNeeded = (actualChargeNative * PRICE_DENOMINATOR) /
+                cachedPriceWithMarkup;
 
             if (preCharge > actualTokenNeeded) {
                 SafeERC20.safeTransfer(token, userOpSender, preCharge - actualTokenNeeded);
             } else if (preCharge < actualTokenNeeded) {
-                SafeERC20.safeTransferFrom(token, userOpSender, address(this), actualTokenNeeded - preCharge);
+                SafeERC20.safeTransferFrom(
+                    token,
+                    userOpSender,
+                    address(this),
+                    actualTokenNeeded - preCharge
+                );
             }
 
-            emit UserOperationSponsored(userOpSender, actualTokenNeeded, actualGasCost, _cachedPrice);
+            emit UserOperationSponsored(
+                userOpSender,
+                actualTokenNeeded,
+                actualGasCost,
+                _cachedPrice
+            );
         }
     }
 

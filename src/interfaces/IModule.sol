@@ -1,12 +1,21 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.20;
 
+struct Module {
+    address manager;
+    bool requiresSig;
+    bool registered;
+    bool attested;
+    uint256 balance;
+}
+
 error DepositAmountTooLow(uint256 amount);
 error InsufficientFunds(uint256 balance, uint256 amount);
 error FailedToWithdrawEth(address receiver, uint256 amount);
 error NotAuthorized(address sender);
 error FailedToRegisterModule(address module);
 error FailedToDeRegisterModule(address module);
+error InvalidPaymasterData(string reason);
 error NullReceiver();
 error NullProxy();
 
@@ -36,5 +45,5 @@ interface IModule {
     function validate(bytes calldata paymasterAndData, address user) external view returns (bool);
 
     // post operation hook
-    function postValidate(bytes calldata context, uint256 actualGasCost) external;
+    function postValidate(bytes32 moduleData, uint256 actualGasCost, address sender) external;
 }

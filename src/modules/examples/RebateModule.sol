@@ -33,8 +33,8 @@ contract RebateModule is BaseModule {
         return true;
     }
 
-    function _postValidate(bytes calldata context, uint256 /** */) internal virtual override {
-        (uint256 valueProvided, address user) = abi.decode(context, (uint256, address));
+    function _postValidate(bytes32 moduleData, uint256, address user) internal virtual override {
+        uint256 valueProvided = uint256(moduleData);
         uint256 gasRebate = (valueProvided * rebate) / 100;
         if (gasRebate > 0) {
             bool success = rebateToken.transfer(user, gasRebate);

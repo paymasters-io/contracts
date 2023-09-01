@@ -12,7 +12,7 @@ interface IModularPaymaster {
     function withdrawToModule(uint256 amount) external;
 
     // registers a module
-    function registerModule(address manager, bool requiresSig) external returns (address);
+    function registerModule(address manager, bool requiresSig) external payable returns (address);
 
     // de-registers a module
     function deregisterModule() external returns (address);

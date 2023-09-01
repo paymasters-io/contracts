@@ -70,8 +70,12 @@ abstract contract BaseModule is Semver, IModule {
         return _validate(paymasterAndData, user);
     }
 
-    function postValidate(bytes calldata context, uint256 actualGasCost) external onlyPaymaster {
-        _postValidate(context, actualGasCost);
+    function postValidate(
+        bytes32 moduleData,
+        uint256 actualGasCost,
+        address sender
+    ) external onlyPaymaster {
+        _postValidate(moduleData, actualGasCost, sender);
     }
 
     function _register(
@@ -92,7 +96,11 @@ abstract contract BaseModule is Semver, IModule {
         address user
     ) internal view virtual returns (bool);
 
-    function _postValidate(bytes calldata context, uint256 actualGasCost) internal virtual;
+    function _postValidate(
+        bytes32 moduleData,
+        uint256 actualGasCost,
+        address sender
+    ) internal virtual;
 
     receive() external payable virtual;
 }

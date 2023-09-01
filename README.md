@@ -17,33 +17,38 @@
 [![GitHub commit activity](https://img.shields.io/github/commit-activity/y/paymasters-io/contracts?logo=github)](https://github.com/paymasters-io/contracts/commits/master)
 [![Twitter Follow](https://img.shields.io/twitter/follow/paymasters_io?style=social)](https://twitter.com/paymasters_io)
 
-**[paymasters.io](https://paymasters.io)** leverages Account Abstraction to provide the infrastructure from which users can pay for user operations (tx) in a decentralized manner. It is a **gas abstraction** layer that allows users to pay for transactions in any ERC20 token or define custom modules for our verifying paymaster's validation.
+Visit our website: [paymasters.io](https://paymasters.io) • Questions: [Telegram](https://t.me/paymasters_io) • Report a bug: [GitHub](https://github.com/paymasters-io/contracts/issues/new?assignees=&labels=bug&template=01_BUG_REPORT.md&title=bug%3A+)
 
-[Build](#getting-started) •
-[Test](#testing) •
-[Report a bug](https://github.com/paymasters-io/contracts/issues/new?assignees=&labels=bug&template=01_BUG_REPORT.md&title=bug%3A+)
-• [Questions](https://t.me/paymasters_io)
-
+At **[paymasters.io](https://paymasters.io)**, we are enabling a robust infrastructure that allows you to seamlessly pay for Ethereum transaction fees.
 </div>
 
-**[paymasters.io](https://paymasters.io)** supports the following:
+## ERC20 Paymaster (Multi-Token Standard)
 
-### ERC20 Paymaster (multi-token standard)
+Our ERC20 Paymaster sets the gold standard for gas abstraction. With this contract, users can pay for transactions using a wide array of ERC20 tokens. The flexibility of this paymaster enables transactions to be settled using any accepted ERC20 token
 
-ERC20 Paymaster is a paymaster contract that allows users to pay for transactions in any ERC20 token. It is a **gas abstraction** contract that allows users to pay for transactions in any ERC20 token. and supports multiple tokens.
+## Modular Paymaster
 
-### Modular Paymaster
+Introducing the Modular Paymaster - a concept that opens doors to innovation. This contract empowers users to define custom modules for our verifying paymaster validation. You can now focus solely on your business logic, while we handle the intricate gas abstraction layer for your users.
 
-Modular Paymaster is a paymaster contract that allows modules to pay for transactions. Users can define custom modules for our verifying paymaster validation. It is a **gas abstraction** contract that allows users to pay for transactions validated by the modules.
+### Modules examples
 
-This allows you to focus on your business logic and not worry about implementing the gas abstraction layer for your users.
+1. ERC20 Gating Module
+2. NFT Gating Module
+3. OnChain Rebates Module
+4. Human Verification Module
 
-example:
+...and more.
 
-1. ERC20 Gating module.
-2. NFTGating module.
-3. OnChain Rebates Module.
-4. Cross-chain module. etc ...
+### Validation Process
+
+To ensure reliability, every module undergoes an attestation process:
+
+1. **Module Interface Implementation**: A module must adhere to the [IModule Interface](./src/interfaces/IModule.sol) for compatibility.
+2. **Registration and Attestation**: Modules need to be registered and attested by trusted entities in [EAS](https://easscan.org/), for transparency and integrity.
+3. **Registration Fee**: A non-refundable registration fee is required.
+4. **Threshold Requirement**: Modules must meet a minimum threshold of attesters for acceptance.
+5. **Revocation Handling**: Modules can be rejected if any attestor revokes their attestation.
+6. **Safety Review**: Following attestation, a mandatory **1-DAY** delay occurs before module approval.
 
 # Getting Started
 

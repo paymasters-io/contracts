@@ -32,8 +32,8 @@ contract HumanVerifiedModule is BaseModule, Human {
         return humanityCheck(signal, root, nullifierHash, proof);
     }
 
-    function _postValidate(bytes calldata context, uint256 /** */) internal virtual override {
-        uint256 nullifierHash = abi.decode(context, (uint256));
+    function _postValidate(bytes32 moduleData, uint256, address) internal virtual override {
+        uint256 nullifierHash = uint256(moduleData);
         _afterHumanityCheck(nullifierHash);
     }
 

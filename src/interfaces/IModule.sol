@@ -20,6 +20,11 @@ error NullReceiver();
 error NullProxy();
 
 interface IModule {
+    event DepositSuccess(uint256 value);
+    event PaymasterDepositSuccess(uint256 amount);
+    event WithdrawSuccess(uint256 amount, address receiver);
+    event PaymasterWithdrawSuccess(uint256 amount);
+
     // returns deposit in paymaster
     function getDeposit() external view returns (uint256);
 

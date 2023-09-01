@@ -34,16 +34,19 @@ abstract contract BaseModule is Semver, IModule {
     function deposit() external payable {
         if (msg.value < 1e16) revert DepositAmountTooLow(msg.value);
         paymaster.depositFromModule{value: msg.value}();
+        emit DepositSuccess(msg.value);
     }
 
     function deposit(uint256 amount) external onlyManager {
         uint256 balance = address(this).balance;
         if (balance < amount) revert InsufficientFunds(balance, amount);
         paymaster.depositFromModule{value: balance}();
+        emit PaymasterDepositSuccess(amount);
     }
 
     function withdrawFromPaymaster(uint256 amount) external onlyManager {
         paymaster.withdrawToModule(amount);
+        emit PaymasterWithdrawSuccess(amount);
     }
 
     function withdraw(uint256 amount, address receiver) external onlyManager {
@@ -52,6 +55,7 @@ abstract contract BaseModule is Semver, IModule {
         if (balance < amount) revert InsufficientFunds(balance, amount);
         (bool sent, ) = receiver.call{value: amount}("");
         if (!sent) revert FailedToWithdrawEth(receiver, amount);
+        emit WithdrawSuccess(amount, receiver);
     }
 
     function register(bool requireSig) public payable returns (address module) {

@@ -42,31 +42,37 @@ contract ModuleAttestations is SchemaResolver, Ownable, IModuleAttestations {
         if (_attestations[msg.sender].attestationCount > 0) revert AlreadyAttested();
         _attestations[msg.sender].fee = msg.value;
         success = true;
+        emit ModuleApplicationSuccess(msg.sender, msg.value);
     }
 
     function addAttester(address attester) external onlyOwner {
         _validAttesters[attester] = true;
+        emit AttesterAdded(attester);
     }
 
     function removeAttester(address attester) external onlyOwner {
         _validAttesters[attester] = false;
+        emit AttesterRemoved(attester);
     }
 
     function addAttesters(address[] calldata attesters) external onlyOwner {
         for (uint256 i = 0; i < attesters.length; i++) {
             _validAttesters[attesters[i]] = true;
+            emit AttesterAdded(attesters[i]);
         }
     }
 
     function removeAttesters(address[] calldata attesters) external onlyOwner {
         for (uint256 i = 0; i < attesters.length; i++) {
             _validAttesters[attesters[i]] = false;
+            emit AttesterRemoved(attesters[i]);
         }
     }
 
     function setAttestationConfig(uint8 threshold, uint256 fee) external onlyOwner {
         _threshold = threshold;
         _registrationFee = fee;
+        emit AttestationConfigSet(threshold, fee);
     }
 
     function attestationResolved(address module) external view returns (bool) {
@@ -132,6 +138,7 @@ contract ModuleAttestations is SchemaResolver, Ownable, IModuleAttestations {
         delete _attested[msg.sender][module];
         if (!_requireUnlocked(atts)) revert NotUnlocked();
         if (module == address(0) || uid == bytes32(0)) revert AccessDenied();
+        emit ClaimedCut(module, uid, msg.sender);
     }
 
     function _requireUnlocked(Attestations memory atts) internal view returns (bool) {

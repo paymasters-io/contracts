@@ -34,6 +34,7 @@ contract ModularPaymaster is BasePaymaster, IModularPaymaster {
     // deposits fund to the paymaster
     function depositFromModule() external payable {
         _modules[msg.sender].balance += msg.value;
+        emit Deposit(msg.sender, msg.value);
     }
 
     // withdraws funds from the paymaster
@@ -43,12 +44,14 @@ contract ModularPaymaster is BasePaymaster, IModularPaymaster {
         _modules[msg.sender].balance -= amount;
         (bool sent, ) = module.manager.call{value: amount}("");
         if (!sent) revert FailedToWithdrawEth(module.manager, amount);
+        emit Withdrawal(msg.sender, amount);
     }
 
     // registers a module
     function registerModule(address manager, bool requiresSig) external payable returns (address) {
         if (_modules[msg.sender].registered) revert FailedToRegisterModule(msg.sender);
         _modules[msg.sender] = Module(manager, requiresSig, true, false, msg.value);
+        emit Registered(msg.sender, manager, requiresSig, msg.value, block.timestamp);
         return msg.sender;
     }
 
@@ -56,6 +59,7 @@ contract ModularPaymaster is BasePaymaster, IModularPaymaster {
     function deregisterModule() external returns (address) {
         if (!_modules[msg.sender].registered) revert FailedToDeRegisterModule(msg.sender);
         _modules[msg.sender].registered = false;
+        emit DeRegistered(msg.sender, block.timestamp);
         return msg.sender;
     }
 
@@ -158,5 +162,7 @@ contract ModularPaymaster is BasePaymaster, IModularPaymaster {
             _modules[module].attested = true;
             IModule(module).postValidate(moduleData, expectedCost, sender);
         }
+
+        emit UserOperationSponsored(sender, actualGasCost, module);
     }
 }

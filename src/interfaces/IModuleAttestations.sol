@@ -28,6 +28,12 @@ error NotTheAttester(address attester, bytes32 uid);
 error NotUnlocked();
 
 interface IModuleAttestations {
+    event ModuleApplicationSuccess(address module, uint256 fee);
+    event AttesterAdded(address attester);
+    event AttesterRemoved(address attester);
+    event AttestationConfigSet(uint8 threshold, uint256 fee);
+    event ClaimedCut(address module, bytes32 uid, address claimer);
+
     function applyForAttestations() external payable returns (bool success);
 
     function addAttester(address attester) external;

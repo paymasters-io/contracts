@@ -13,6 +13,7 @@ import {FailedToWithdrawEth} from "@paymasters-io/interfaces/IModule.sol";
 /// only one instance per chain.
 contract ModuleAttestations is SchemaResolver, Ownable, IModuleAttestations {
     bytes32 immutable _schemaId;
+    bytes32 _prevUid = bytes32(0);
 
     mapping(address => bool) _validAttesters; // attester => valid
     mapping(address => Attestations) _attestations; // module => attestation
@@ -106,13 +107,14 @@ contract ModuleAttestations is SchemaResolver, Ownable, IModuleAttestations {
             address(this),
             type(uint64).max,
             true,
-            bytes32(0),
+            _prevUid,
             abi.encode(name, moduleAddress, manager, verified, safe),
             msg.value
         );
         AttestationRequest memory request = AttestationRequest(_schemaId, easRequestData);
         bytes32 uid = _eas.attest(request);
         require(uid != bytes32(0), "Failed to attest");
+        _prevUid = uid;
     }
 
     function revokeEAS(bytes32 uuid) external payable {

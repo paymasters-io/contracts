@@ -13,13 +13,13 @@ import "@paymasters-io/utils/OracleHelper.sol";
 import "@paymasters-io/interfaces/IERC20Paymaster.sol";
 
 /// @notice Adapted from eth-infinitism 'TokenPaymaster' and pimlico 'ERC20Paymaster'
-contract ERC20PaymastersIo is BasePaymaster, OracleHelper, IERC20PaymastersIo {
-    using SafeERC20 for IERC20;
+contract ERC20Paymaster is BasePaymaster, OracleHelper, IERC20Paymaster {
+    using SafeERC20 for IERC20Metadata;
 
     constructor(
         IEntryPoint _entryPoint,
         TokenInfo memory _nativeTokenInfo,
-        uint224 _ttl,
+        uint192 _ttl,
         uint32 _updateThreshold,
         address _owner
     ) BasePaymaster(_entryPoint) Ownable(_owner) {
@@ -38,18 +38,12 @@ contract ERC20PaymastersIo is BasePaymaster, OracleHelper, IERC20PaymastersIo {
     }
 
     function addToken(IERC20Metadata token, TokenInfo memory tokenInfo) external onlyOwner {
-        if (
-            tokenInfo.priceMarkup > 2 * PRICE_DENOMINATOR ||
-            tokenInfo.priceMarkup < PRICE_DENOMINATOR
-        ) revert PriceMarkupOutOfBounds(tokenInfo.priceMarkup, PRICE_DENOMINATOR);
+        uint256 markup = uint256(tokenInfo.priceMarkup);
+        if (markup > 2 * PRICE_DENOMINATOR || markup < PRICE_DENOMINATOR)
+            revert PriceMarkupOutOfBounds(markup, PRICE_DENOMINATOR);
         tokenInfo.decimals = token.decimals();
         _tokenInfo[token] = tokenInfo;
-        emit TokenAdded(
-            address(token),
-            tokenInfo.proxyOrFeed,
-            tokenInfo.priceMarkup,
-            tokenInfo.priceMaxAge
-        );
+        emit TokenAdded(address(token), tokenInfo.proxyOrFeed, markup, tokenInfo.priceMaxAge);
     }
 
     function removeToken(IERC20Metadata token) external onlyOwner {
@@ -57,13 +51,13 @@ contract ERC20PaymastersIo is BasePaymaster, OracleHelper, IERC20PaymastersIo {
         emit TokenRemoved(address(token));
     }
 
-    function withdraw(IERC20 token, address to, uint256 amount) external onlyOwner {
+    function withdraw(IERC20Metadata token, address to, uint256 amount) external onlyOwner {
         token.safeTransfer(to, amount);
     }
 
     function _validateToken(IERC20Metadata token) internal view {
         if (
-            token == native ||
+            token == IERC20Metadata(address(0x0)) ||
             _tokenInfo[token].proxyOrFeed == address(0x0) ||
             bytes(_tokenInfo[token].ticker).length == 0
         ) {
@@ -86,11 +80,12 @@ contract ERC20PaymastersIo is BasePaymaster, OracleHelper, IERC20PaymastersIo {
             TokenInfo memory tokenInfo = _tokenInfo[token];
             Cache memory cache = _cache[token];
 
-            uint256 preChargeNative = requiredPreFund + (REFUND_POSTOP_COST * userOp.maxFeePerGas);
-            uint256 cachedPriceWithMarkup = (cache.price * PRICE_DENOMINATOR) /
-                tokenInfo.priceMarkup;
+            uint256 preChargeNative = requiredPreFund +
+                (uint256(REFUND_POSTOP_COST) * userOp.maxFeePerGas);
+            uint256 cachedPriceWithMarkup = (uint256(cache.price) * PRICE_DENOMINATOR) /
+                uint256(tokenInfo.priceMarkup);
             uint256 tokenAmount = (preChargeNative * PRICE_DENOMINATOR) / cachedPriceWithMarkup;
-            SafeERC20.safeTransferFrom(token, userOp.sender, address(this), tokenAmount);
+            token.safeTransferFrom(userOp.sender, address(this), tokenAmount);
 
             context = abi.encode(
                 tokenAmount,
@@ -134,22 +129,17 @@ contract ERC20PaymastersIo is BasePaymaster, OracleHelper, IERC20PaymastersIo {
                 return;
             }
 
-            uint256 _cachedPrice = updatePrice(OracleQuery(native, token), oracle, false);
+            uint256 _cachedPrice = uint256(updatePrice(OracleQuery(native, token), oracle, false));
             uint256 cachedPriceWithMarkup = (_cachedPrice * PRICE_DENOMINATOR) /
-                tokenInfo.priceMarkup;
-            uint256 actualChargeNative = actualGasCost + REFUND_POSTOP_COST * gasPrice;
+                uint256(tokenInfo.priceMarkup);
+            uint256 actualChargeNative = actualGasCost + uint256(REFUND_POSTOP_COST) * gasPrice;
             uint256 actualTokenNeeded = (actualChargeNative * PRICE_DENOMINATOR) /
                 cachedPriceWithMarkup;
 
             if (preCharge > actualTokenNeeded) {
-                SafeERC20.safeTransfer(token, userOpSender, preCharge - actualTokenNeeded);
+                token.safeTransfer(userOpSender, preCharge - actualTokenNeeded);
             } else if (preCharge < actualTokenNeeded) {
-                SafeERC20.safeTransferFrom(
-                    token,
-                    userOpSender,
-                    address(this),
-                    actualTokenNeeded - preCharge
-                );
+                token.safeTransferFrom(userOpSender, address(this), actualTokenNeeded - preCharge);
             }
 
             emit UserOperationSponsored(

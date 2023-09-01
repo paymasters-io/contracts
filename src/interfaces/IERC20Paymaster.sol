@@ -7,7 +7,7 @@ error TokenNotSupported(address token);
 error PriceMarkupOutOfBounds(uint256 upper, uint256 lower);
 error TokenNotSpecified();
 
-interface IERC20PaymastersIo {
+interface IERC20Paymaster {
     event UserOperationSponsored(
         address indexed user,
         uint256 actualTokenCharge,
@@ -21,7 +21,12 @@ interface IERC20PaymastersIo {
 
     event TokenTickerAdded(address indexed tokenAddress, string ticker);
 
-    event TokenAdded(address indexed tokenAddress, address proxyOrFeed, uint256 priceMarkup, uint256 priceMaxAge);
+    event TokenAdded(
+        address indexed tokenAddress,
+        address proxyOrFeed,
+        uint256 priceMarkup,
+        uint256 priceMaxAge
+    );
 
     event TokenRemoved(address indexed tokenAddress);
 
@@ -33,5 +38,5 @@ interface IERC20PaymastersIo {
 
     function removeToken(IERC20Metadata token) external;
 
-    function withdraw(IERC20 token, address to, uint256 amount) external;
+    function withdraw(IERC20Metadata token, address to, uint256 amount) external;
 }

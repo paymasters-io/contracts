@@ -15,11 +15,11 @@ struct OracleQuery {
 }
 
 struct TokenInfo {
-    address proxyOrFeed;
-    string ticker;
-    uint216 priceMaxAge;
+    uint64 priceMaxAge;
     uint32 priceMarkup;
     uint8 decimals;
+    string ticker;
+    address proxyOrFeed;
 }
 
 struct Cache {
@@ -27,7 +27,7 @@ struct Cache {
     uint64 timestamp;
 }
 
-error PriceIsZeroOrLess(uint256 a, uint256 b);
+error PriceIsZeroOrLess(int256 a, int256 b);
 error UnknownTokenPair(IERC20Metadata base, IERC20Metadata token);
 error UpdateThresholdTooHigh(uint32 updateThreshold);
 error StalePrice();
@@ -35,31 +35,35 @@ error StalePrice();
 interface IOracleHelper {
     event TokenPriceUpdated(
         address indexed tokenAddress,
-        uint256 currentPrice,
-        uint256 previousPrice,
-        uint256 cachedPriceTimestamp
+        uint192 currentPrice,
+        uint192 previousPrice,
+        uint64 cachedPriceTimestamp
     );
 
     function getNativeToken() external view returns (TokenInfo memory);
 
-    function updatePrice(OracleQuery memory self, Oracle oracle, bool force) external returns (uint256);
+    function updatePrice(
+        OracleQuery memory self,
+        Oracle oracle,
+        bool force
+    ) external returns (uint192);
 
     function getPriceFromChainlink(
         address baseFeed,
         address tokenFeed,
-        uint256 decimals
+        uint8 decimals
     ) external view returns (uint256);
 
     function getPriceFromSupra(
         address priceFeed,
         string memory baseTicker,
         string memory tokenTicker,
-        uint256 decimals
+        uint8 decimals
     ) external view returns (uint256);
 
     function getPriceFromAPI3DAO(
         address baseProxy,
         address tokenProxy,
-        uint256 decimals
+        uint8 decimals
     ) external view returns (uint256);
 }

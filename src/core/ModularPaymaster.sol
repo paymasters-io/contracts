@@ -63,65 +63,42 @@ contract ModularPaymaster is BasePaymaster, IModularPaymaster {
         return msg.sender;
     }
 
-    function getHash(
-        UserOperation calldata userOp,
-        uint48 validUntil,
-        uint48 validAfter
-    ) public view returns (bytes32) {
-        address sender = userOp.getSender();
-        return
-            keccak256(
-                abi.encode(
-                    sender,
-                    userOp.nonce,
-                    keccak256(userOp.initCode),
-                    keccak256(userOp.callData),
-                    userOp.callGasLimit,
-                    userOp.verificationGasLimit,
-                    userOp.preVerificationGas,
-                    userOp.maxFeePerGas,
-                    userOp.maxPriorityFeePerGas,
-                    block.chainid,
-                    address(this),
-                    validUntil,
-                    validAfter
-                )
-            );
-    }
-
     function _validatePaymasterUserOp(
         UserOperation calldata userOp,
         bytes32,
         uint256 requiredPreFund
     ) internal view override returns (bytes memory context, uint256 validationResult) {
-        uint256 moduleDataOffset = 20 + 20;
-        // 32 bytes of free memory
-        uint256 timestampOffset = 32 + moduleDataOffset;
-        uint256 signatureOffset = 12 + timestampOffset;
+        if (userOp.paymasterAndData.length < 84 + 64) revert InvalidPaymasterData("length");
+        address module = address(bytes20(userOp.paymasterAndData[20:40]));
+        uint48[2] memory valid;
+        valid[0] = uint48(bytes6(userOp.paymasterAndData[72:72 + 6]));
+        valid[1] = uint48(bytes6(userOp.paymasterAndData[84 - 6:84]));
 
-        if (userOp.paymasterAndData.length < signatureOffset + 64)
-            revert InvalidPaymasterData("length");
-
-        address module = address(bytes20(userOp.paymasterAndData[20:moduleDataOffset]));
-
-        uint48 validUntil = uint48(
-            bytes6(userOp.paymasterAndData[timestampOffset:timestampOffset + 6])
+        bytes32 hash = keccak256(
+            abi.encode(
+                userOp.sender,
+                userOp.nonce,
+                keccak256(userOp.initCode),
+                keccak256(userOp.callData),
+                userOp.callGasLimit,
+                userOp.verificationGasLimit,
+                userOp.preVerificationGas,
+                userOp.maxFeePerGas,
+                userOp.maxPriorityFeePerGas,
+                block.chainid,
+                address(this),
+                valid[0],
+                valid[1]
+            )
         );
-        uint48 validAfter = uint48(
-            bytes6(userOp.paymasterAndData[signatureOffset - 6:signatureOffset])
-        );
-        bytes memory signature = userOp.paymasterAndData[signatureOffset:];
 
+        bytes memory signature = userOp.paymasterAndData[84:];
         Module memory moduleData = _modules[module];
-
         if (!moduleData.registered || module == address(0)) revert InvalidPaymasterData("module");
-
         uint256 gasCost = requiredPreFund + (41000 * userOp.maxFeePerGas);
         if (moduleData.balance < gasCost) revert InsufficientFunds(moduleData.balance, gasCost);
 
-        bytes32 hash = getHash(userOp, validUntil, validAfter);
         bool validationSuccess;
-
         /// NOTE:::PLEASE NOTE vs1 == module signer, vs2 == 2fa signer i.e paymasters.io
         if (moduleData.requiresSig) {
             (address vs1, address vs2) = signature.validateTwoSignatures(hash);
@@ -130,13 +107,8 @@ contract ModularPaymaster is BasePaymaster, IModularPaymaster {
             address vs1 = signature.validateOneSignature(hash);
             validationSuccess = vs1 == moduleData.manager;
         }
-
-        context = abi.encodePacked(
-            userOp.paymasterAndData[moduleDataOffset:timestampOffset],
-            module,
-            userOp.sender
-        );
-        validationResult = _packValidationData(!validationSuccess, validUntil, validAfter);
+        context = abi.encodePacked(userOp.paymasterAndData[40:72], module, userOp.sender);
+        validationResult = _packValidationData(!validationSuccess, valid[0], valid[1]);
     }
 
     function _postOp(

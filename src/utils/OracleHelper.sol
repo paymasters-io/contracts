@@ -33,14 +33,17 @@ contract OracleHelper is AbstractStore, IOracleHelper {
         Oracle _oracle,
         bool force
     ) public returns (uint192) {
-        Cache memory cache = _cache[query.token];
+        IERC20Metadata qToken = query.token;
+        IERC20Metadata qBase = query.base;
+
+        Cache memory cache = _cache[qToken];
         uint256 cacheAge = block.timestamp - cache.timestamp;
         if (!force && cacheAge <= uint256(ttl)) {
             return cache.price;
         }
 
-        TokenInfo memory base = _tokenInfo[query.base];
-        TokenInfo memory token = _tokenInfo[query.token];
+        TokenInfo memory base = _tokenInfo[qBase];
+        TokenInfo memory token = _tokenInfo[qToken];
         _requiresValidDecimalsForPair(query, base.decimals, token.decimals);
 
         uint256 price;
@@ -64,10 +67,10 @@ contract OracleHelper is AbstractStore, IOracleHelper {
             return cache.price;
         }
 
-        _cache[query.token].price = localPrice;
+        _cache[qToken].price = localPrice;
         cache.timestamp = uint64(block.timestamp);
-        _cache[query.token].timestamp = cache.timestamp;
-        emit TokenPriceUpdated(address(query.token), localPrice, cache.price, cache.timestamp);
+        _cache[qToken].timestamp = cache.timestamp;
+        emit TokenPriceUpdated(address(qToken), localPrice, cache.price, cache.timestamp);
         return localPrice;
     }
 

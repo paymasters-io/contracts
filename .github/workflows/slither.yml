@@ -3,7 +3,10 @@ name: Slither Analysis
 on: [push, pull_request, workflow_call]
 
 jobs:
+    build:
+        uses: paymasters-io/contracts/.github/workflows/test.yml@main
     analyze:
+        needs: [build]
         runs-on: ubuntu-latest
         permissions:
             contents: read

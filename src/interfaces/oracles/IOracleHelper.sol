@@ -18,8 +18,7 @@ struct TokenInfo {
     uint64 priceMaxAge;
     uint32 priceMarkup;
     uint8 decimals;
-    string ticker;
-    address proxyOrFeed;
+    address feed;
 }
 
 struct Cache {
@@ -54,12 +53,7 @@ interface IOracleHelper {
         uint8 decimals
     ) external view returns (uint256);
 
-    function getPriceFromSupra(
-        address priceFeed,
-        string memory baseTicker,
-        string memory tokenTicker,
-        uint8 decimals
-    ) external view returns (uint256);
+    function getPriceFromSupra(address priceFeed, uint8 decimals) external view returns (uint256);
 
     function getPriceFromAPI3DAO(
         address baseProxy,

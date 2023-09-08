@@ -33,9 +33,9 @@ jobs:
                   make install
               id: install
 
-            - name: Run Forge update
+            - name: Run Submodule update
               run: |
-                  make update
+                  git submodule update --recursive
               id: update
 
             - name: Run Forge build

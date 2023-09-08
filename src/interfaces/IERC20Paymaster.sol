@@ -19,11 +19,9 @@ interface IERC20Paymaster {
 
     event OracleChanged(Oracle newOracle);
 
-    event TokenTickerAdded(address indexed tokenAddress, string ticker);
-
     event TokenAdded(
         address indexed tokenAddress,
-        address proxyOrFeed,
+        address feed,
         uint256 priceMarkup,
         uint256 priceMaxAge
     );
@@ -31,8 +29,6 @@ interface IERC20Paymaster {
     event TokenRemoved(address indexed tokenAddress);
 
     function setOracle(Oracle _oracle) external;
-
-    function setTokenTicker(IERC20Metadata token, string calldata ticker) external;
 
     function addToken(IERC20Metadata token, TokenInfo memory _tokenInfo) external;
 

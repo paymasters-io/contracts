@@ -23,7 +23,7 @@ contract ERC20Paymaster is BasePaymaster, OracleHelper, IERC20Paymaster {
         uint32 _updateThreshold,
         address _owner
     ) BasePaymaster(_entryPoint) Ownable(_owner) {
-        _tokenInfo[native] = _nativeTokenInfo;
+        _tokenInfo[NATIVE] = _nativeTokenInfo;
         _setUpdateThresholdAndTTL(_updateThreshold, _ttl);
     }
 
@@ -32,18 +32,13 @@ contract ERC20Paymaster is BasePaymaster, OracleHelper, IERC20Paymaster {
         emit OracleChanged(_oracle);
     }
 
-    function setTokenTicker(IERC20Metadata token, string calldata ticker) external onlyOwner {
-        _tokenInfo[token].ticker = ticker;
-        emit TokenTickerAdded(address(token), ticker);
-    }
-
     function addToken(IERC20Metadata token, TokenInfo memory tokenInfo) external onlyOwner {
         uint256 markup = uint256(tokenInfo.priceMarkup);
         if (markup > 2 * PRICE_DENOMINATOR || markup < PRICE_DENOMINATOR)
             revert PriceMarkupOutOfBounds(markup, PRICE_DENOMINATOR);
         tokenInfo.decimals = token.decimals();
         _tokenInfo[token] = tokenInfo;
-        emit TokenAdded(address(token), tokenInfo.proxyOrFeed, markup, tokenInfo.priceMaxAge);
+        emit TokenAdded(address(token), tokenInfo.feed, markup, tokenInfo.priceMaxAge);
     }
 
     function removeToken(IERC20Metadata token) external onlyOwner {
@@ -56,11 +51,7 @@ contract ERC20Paymaster is BasePaymaster, OracleHelper, IERC20Paymaster {
     }
 
     function _validateToken(IERC20Metadata token) internal view {
-        if (
-            token == IERC20Metadata(address(0x0)) ||
-            _tokenInfo[token].proxyOrFeed == address(0x0) ||
-            bytes(_tokenInfo[token].ticker).length == 0
-        ) {
+        if (token == IERC20Metadata(address(0x0)) || _tokenInfo[token].feed == address(0x0)) {
             revert TokenNotSupported(address(token));
         }
     }
@@ -130,7 +121,7 @@ contract ERC20Paymaster is BasePaymaster, OracleHelper, IERC20Paymaster {
                 return;
             }
 
-            uint256 _cachedPrice = uint256(updatePrice(OracleQuery(native, token), oracle, false));
+            uint256 _cachedPrice = uint256(updatePrice(OracleQuery(NATIVE, token), oracle, false));
             uint256 cachedPriceWithMarkup = (_cachedPrice * PRICE_DENOMINATOR) /
                 uint256(tokenInfo.priceMarkup);
             uint256 actualChargeNative = actualGasCost + uint256(REFUND_POSTOP_COST) * gasPrice;

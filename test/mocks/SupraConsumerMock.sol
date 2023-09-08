@@ -13,12 +13,14 @@ contract MockISupraConsumer is Test, ISupraConsumer {
         priceToken = _priceToken;
     }
 
-    function checkPrice(string memory marketPair) external view override returns (int256, uint256) {
-        (marketPair);
-        if (keccak256(bytes(marketPair)) == keccak256(bytes("eth"))) {
-            return (price, 0);
-        }
-        return (priceToken, 0);
+    function getSvalues(
+        uint64[] memory _pairIndexes
+    ) external view override returns (bytes32[] memory, bool[] memory) {
+        return (new bytes32[](0), new bool[](0));
+    }
+
+    function getSvalue(uint64 _pairIndex) external view override returns (bytes32, bool) {
+        return (bytes32(0), true);
     }
 
     function testIgnoresMock() public {

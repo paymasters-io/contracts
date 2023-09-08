@@ -5,9 +5,10 @@ import "@chainlink/contracts/src/v0.8/interfaces/AggregatorV3Interface.sol";
 import "@paymasters-io/interfaces/oracles/IAPI3Proxy.sol";
 import "@paymasters-io/interfaces/oracles/ISupraConsumer.sol";
 import "@paymasters-io/interfaces/oracles/IOracleHelper.sol";
+import "@paymasters-io/library/SupraHelpers.sol";
 
 abstract contract AbstractStore {
-    IERC20Metadata constant native =
+    IERC20Metadata constant NATIVE =
         IERC20Metadata(address(0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE));
 
     uint256 constant PRICE_DENOMINATOR = 1e26;
@@ -24,7 +25,7 @@ abstract contract AbstractStore {
 
 contract OracleHelper is AbstractStore, IOracleHelper {
     function getNativeToken() public view returns (TokenInfo memory) {
-        return _tokenInfo[native];
+        return _tokenInfo[NATIVE];
     }
 
     function updatePrice(
@@ -44,11 +45,11 @@ contract OracleHelper is AbstractStore, IOracleHelper {
 
         uint256 price;
         if (_oracle == Oracle.CHAINLINK) {
-            price = getPriceFromChainlink(base.proxyOrFeed, token.proxyOrFeed, token.decimals);
+            price = getPriceFromChainlink(base.feed, token.feed, token.decimals);
         } else if (_oracle == Oracle.SUPRA) {
-            price = getPriceFromSupra(base.proxyOrFeed, base.ticker, token.ticker, token.decimals);
+            price = getPriceFromSupra(base.feed, token.decimals);
         } else {
-            price = getPriceFromAPI3DAO(base.proxyOrFeed, token.proxyOrFeed, token.decimals);
+            price = getPriceFromAPI3DAO(base.feed, token.feed, token.decimals);
         }
 
         uint192 localPrice = uint192(price);
@@ -95,18 +96,29 @@ contract OracleHelper is AbstractStore, IOracleHelper {
         return (uint256(decimals) * uint256(basePrice)) / uint256(tokenPrice);
     }
 
+    /// only available for usdc/eth
     function getPriceFromSupra(
         address priceFeed,
-        string memory baseTicker,
-        string memory tokenTicker,
-        uint8 decimals
+        /** uint256 tokenIndex, */ uint8 decimals
     ) public view returns (uint256) {
-        (int256 basePrice, uint256 bTime) = ISupraConsumer(priceFeed).checkPrice(baseTicker);
-        _requiresAnswerInRound(0, bTime, 1);
-        (int256 tokenPrice, uint256 tTime) = ISupraConsumer(priceFeed).checkPrice(tokenTicker);
-        _requiresAnswerInRound(0, tTime, 1);
-        _requiresPriceGreaterThanZero(basePrice, tokenPrice);
-        return (uint256(decimals) * uint256(basePrice)) / uint256(tokenPrice);
+        uint64[] memory _indexesForPair;
+        _indexesForPair[0] = 19; // eth/usd
+        _indexesForPair[1] = 89; //usdc/usd
+
+        (bytes32[] memory val, ) = ISupraConsumer(priceFeed).getSvalues(_indexesForPair);
+        uint256[4][] memory decodedArray = new uint256[4][](2);
+        for (uint i = 0; i < 2; i++) {
+            uint256[4] memory decoded = SupraHelpers.unpack(val[i]);
+            decodedArray[i] = decoded;
+        }
+
+        uint256 basePrice = decodedArray[0][3];
+        uint256 tokenPrice = decodedArray[1][3];
+
+        _requiresAnswerInRound(0, decodedArray[0][2], 1);
+        _requiresAnswerInRound(0, decodedArray[1][2], 1);
+        _requiresPriceGreaterThanZero(int256(basePrice), int256(tokenPrice));
+        return (uint256(decimals) * basePrice) / tokenPrice;
     }
 
     function getPriceFromAPI3DAO(

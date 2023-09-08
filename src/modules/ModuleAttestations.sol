@@ -12,7 +12,7 @@ import {FailedToWithdrawEth} from "@paymasters-io/interfaces/IModule.sol";
 /// modular contracts enabled by EAS.
 /// only one instance per chain.
 contract ModuleAttestations is SchemaResolver, Ownable, IModuleAttestations {
-    bytes32 immutable _schemaId;
+    bytes32 _schemaId;
     bytes32 _prevUid = bytes32(0);
 
     mapping(address => bool) _validAttesters; // attester => valid
@@ -23,13 +23,8 @@ contract ModuleAttestations is SchemaResolver, Ownable, IModuleAttestations {
     uint8 _threshold = 3; // 3 attesters
     uint256 _registrationFee = 2.5e16; // 0.025 ether
 
-    constructor(
-        IEAS eas,
-        ISchemaRegistry schemaReg,
-        string memory schema,
-        address _owner
-    ) SchemaResolver(eas) Ownable(_owner) {
-        _schemaId = schemaReg.register(schema, this, true);
+    constructor(IEAS eas, bytes32 schema, address _owner) SchemaResolver(eas) Ownable(_owner) {
+        _schemaId = schema;
     }
 
     modifier onlyValidAttester(address attester) {
@@ -69,10 +64,15 @@ contract ModuleAttestations is SchemaResolver, Ownable, IModuleAttestations {
         }
     }
 
-    function setAttestationConfig(uint8 threshold, uint256 fee) external onlyOwner {
+    function setAttestationConfig(
+        uint256 fee,
+        bytes32 schemaId,
+        uint8 threshold
+    ) external onlyOwner {
         _threshold = threshold;
         _registrationFee = fee;
-        emit AttestationConfigSet(threshold, fee);
+        _schemaId = schemaId;
+        emit AttestationConfigSet(fee, schemaId, threshold);
     }
 
     function attestationResolved(address module) external view returns (bool) {
@@ -118,9 +118,8 @@ contract ModuleAttestations is SchemaResolver, Ownable, IModuleAttestations {
             msg.value
         );
         AttestationRequest memory request = AttestationRequest(_schemaId, easRequestData);
-        bytes32 uid = _eas.attest(request);
-        require(uid != bytes32(0), "Failed to attest");
-        _prevUid = uid;
+        _prevUid = _eas.attest(request);
+        require(_prevUid != bytes32(0), "Failed to attest");
     }
 
     function revokeEAS(bytes32 uuid) external payable {

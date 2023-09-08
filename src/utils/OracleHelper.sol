@@ -141,7 +141,7 @@ contract OracleHelper is AbstractStore, IOracleHelper {
         uint8 a,
         uint8 b
     ) internal pure {
-        if (a < 6 || b < 6) revert UnknownTokenPair(self.base, self.token);
+        if (a < 6 || b < 6) revert UnknownTokenPair(address(self.base), address(self.token));
     }
 
     function _setUpdateThresholdAndTTL(uint32 _threshold, uint192 _ttl) internal {

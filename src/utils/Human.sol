@@ -24,7 +24,9 @@ contract Human {
     /// @param _action The World ID action ID
     constructor(IWorldID _worldId, string memory _appId, string memory _action) {
         worldId = _worldId;
-        externalNullifierHash = abi.encodePacked(abi.encodePacked(_appId).hashToField(), _action).hashToField();
+        externalNullifierHash = abi
+            .encodePacked(abi.encodePacked(_appId).hashToField(), _action)
+            .hashToField();
     }
 
     /// @param signal An arbitrary input from the user that cannot be tampered with. In this case, it is the user's wallet address.

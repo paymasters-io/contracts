@@ -6,11 +6,11 @@ on:
 
 jobs:
     build:
-        uses: paymasters-io/contracts/.github/workflows/test.yml@dev
+        uses: paymasters-io/contracts/.github/workflows/test.yml@main
     spell-check:
-        uses: paymasters-io/contracts/.github/workflows/spell-check.yml@dev
+        uses: paymasters-io/contracts/.github/workflows/spell-check.yml@main
     analyze:
-        uses: paymasters-io/contracts/.github/workflows/slither.yml@dev
+        uses: paymasters-io/contracts/.github/workflows/slither.yml@main
 
     publish:
         needs: [build, spell-check, analyze]

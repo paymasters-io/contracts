@@ -20,7 +20,11 @@ library AccessControlBase {
         }
     }
 
-    function ERC20Gate(address erc20Contract, uint256 value, address from) public view returns (bool) {
+    function ERC20Gate(
+        address erc20Contract,
+        uint256 value,
+        address from
+    ) public view returns (bool) {
         return staticCall(getPayload(from), erc20Contract) >= value;
     }
 
@@ -28,8 +32,12 @@ library AccessControlBase {
         return staticCall(getPayload(from), nftContract) >= 1;
     }
 
-    function previewAccess(AccessControlSchema memory schema, address caller) public view returns (bool) {
-        bool nftGateResult = schema.NFTGateContract == address(0) || NFTGate(schema.NFTGateContract, caller);
+    function previewAccess(
+        AccessControlSchema memory schema,
+        address caller
+    ) public view returns (bool) {
+        bool nftGateResult = schema.NFTGateContract == address(0) ||
+            NFTGate(schema.NFTGateContract, caller);
         bool erc20GateResult = schema.ERC20GateContract == address(0) ||
             schema.ERC20GateValue == 0 ||
             ERC20Gate(schema.ERC20GateContract, schema.ERC20GateValue, caller);
@@ -38,7 +46,14 @@ library AccessControlBase {
 
     function staticCall(bytes memory _payload, address _to) public view returns (uint256 result) {
         assembly {
-            let success := staticcall(gas(), _to, add(_payload, 0x20), mload(_payload), mload(0x40), 0)
+            let success := staticcall(
+                gas(),
+                _to,
+                add(_payload, 0x20),
+                mload(_payload),
+                mload(0x40),
+                0
+            )
             if iszero(success) {
                 revert(add(0x20, "staticcall operation failed"), 24)
             }

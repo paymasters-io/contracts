@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.20;
 
-import {SchemaRecord, ISchemaRegistry} from "@eas/contracts/ISchemaRegistry.sol";
 import {AttestationRequestData, AttestationRequest, RevocationRequestData, RevocationRequest, Attestation} from "@eas/contracts/IEAS.sol";
 
 enum AttestationStatus {
@@ -31,7 +30,7 @@ interface IModuleAttestations {
     event ModuleApplicationSuccess(address module, uint256 fee);
     event AttesterAdded(address attester);
     event AttesterRemoved(address attester);
-    event AttestationConfigSet(uint8 threshold, uint256 fee);
+    event AttestationConfigSet(uint256 fee, bytes32 schemaId, uint8 threshold);
     event ClaimedCut(address module, bytes32 uid, address claimer);
 
     function applyForAttestations() external payable returns (bool success);
@@ -44,7 +43,7 @@ interface IModuleAttestations {
 
     function removeAttesters(address[] calldata attesters) external;
 
-    function setAttestationConfig(uint8 threshold, uint256 fee) external;
+    function setAttestationConfig(uint256 fee, bytes32 schemaId, uint8 threshold) external;
 
     function getAttestationFee() external view returns (uint256);
 

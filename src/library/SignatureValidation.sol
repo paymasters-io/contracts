@@ -49,7 +49,10 @@ library SignatureValidation {
         }
     }
 
-    function validateOneSignature(bytes calldata _signature, bytes32 _hash) public pure returns (address signer) {
+    function validateOneSignature(
+        bytes calldata _signature,
+        bytes32 _hash
+    ) public pure returns (address signer) {
         if (total(_signature) != 1) revert InvalidSignatureLength();
         signer = ECDSA.recover(_hash, _signature);
     }

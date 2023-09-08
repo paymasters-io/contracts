@@ -85,6 +85,7 @@ contract ERC20Paymaster is BasePaymaster, OracleHelper, IERC20Paymaster {
             uint256 cachedPriceWithMarkup = (uint256(cache.price) * PRICE_DENOMINATOR) /
                 uint256(tokenInfo.priceMarkup);
             uint256 tokenAmount = (preChargeNative * PRICE_DENOMINATOR) / cachedPriceWithMarkup;
+            // slither-disable-next-line arbitrary-send-erc20
             token.safeTransferFrom(userOp.sender, address(this), tokenAmount);
 
             context = abi.encode(
@@ -139,6 +140,7 @@ contract ERC20Paymaster is BasePaymaster, OracleHelper, IERC20Paymaster {
             if (preCharge > actualTokenNeeded) {
                 token.safeTransfer(userOpSender, preCharge - actualTokenNeeded);
             } else if (preCharge < actualTokenNeeded) {
+                // slither-disable-next-line arbitrary-send-erc20
                 token.safeTransferFrom(userOpSender, address(this), actualTokenNeeded - preCharge);
             }
 

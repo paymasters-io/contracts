@@ -10,7 +10,7 @@ clean  :; @forge clean
 
 install :; @forge install foundry-rs/forge-std eth-infinitism/account-abstraction openzeppelin/openzeppelin-contracts matter-labs/era-system-contracts smartcontractkit/chainlink-brownie-contracts ethereum-attestation-service/eas-contracts  --no-commit
 
-update:; @forge update
+update:; @git submodule update --recursive && forge update
 
 build:; @forge build --build-info --sizes
 

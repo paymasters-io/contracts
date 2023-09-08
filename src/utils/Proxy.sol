@@ -19,7 +19,7 @@ interface IProxy {
 contract Proxy {
     // Singleton always needs to be first declared variables, to ensure that it is at the same location in the contracts to which calls are delegated.
     // To reduce deployment costs this variable is internal and needs to be retrieved via `getStorageAt`
-    address internal singleton;
+    address immutable singleton;
 
     /**
      * @notice Constructor function sets address of singleton contract.

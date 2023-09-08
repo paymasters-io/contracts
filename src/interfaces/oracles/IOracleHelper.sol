@@ -28,7 +28,7 @@ struct Cache {
 }
 
 error PriceIsZeroOrLess(int256 a, int256 b);
-error UnknownTokenPair(IERC20Metadata base, IERC20Metadata token);
+error UnknownTokenPair(address base, address token);
 error UpdateThresholdTooHigh(uint32 updateThreshold);
 error StalePrice();
 

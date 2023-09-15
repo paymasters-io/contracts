@@ -33,7 +33,7 @@ contract ERC20GateModule is BaseModule {
     }
 
     function _validate(
-        bytes calldata /** paymasterAndData */,
+        bytes calldata /** verificationData */,
         address user
     ) internal view virtual override returns (bool) {
         return erc20Token.ERC20Gate(minAmount, user);

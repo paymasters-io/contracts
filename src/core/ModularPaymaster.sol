@@ -17,6 +17,7 @@ contract ModularPaymaster is BasePaymaster, IModularPaymaster {
     using SignatureValidation for bytes;
 
     IModuleAttestations immutable _attester;
+
     mapping(address => Module) _modules;
 
     constructor(
@@ -63,6 +64,32 @@ contract ModularPaymaster is BasePaymaster, IModularPaymaster {
         return msg.sender;
     }
 
+    function getHash(
+        UserOperation calldata userOp,
+        uint48 validUntil,
+        uint48 validAfter
+    ) public view returns (bytes32) {
+        address sender = userOp.getSender();
+        return
+            keccak256(
+                abi.encode(
+                    sender,
+                    userOp.nonce,
+                    keccak256(userOp.initCode),
+                    keccak256(userOp.callData),
+                    userOp.callGasLimit,
+                    userOp.verificationGasLimit,
+                    userOp.preVerificationGas,
+                    userOp.maxFeePerGas,
+                    userOp.maxPriorityFeePerGas,
+                    block.chainid,
+                    address(this),
+                    validUntil,
+                    validAfter
+                )
+            );
+    }
+
     function _validatePaymasterUserOp(
         UserOperation calldata userOp,
         bytes32,
@@ -70,10 +97,13 @@ contract ModularPaymaster is BasePaymaster, IModularPaymaster {
     ) internal view override returns (bytes memory context, uint256 validationResult) {
         if (userOp.paymasterAndData.length < 84 + 64) revert InvalidPaymasterData("length");
         address module = address(bytes20(userOp.paymasterAndData[20:40]));
+
         uint48[2] memory valid;
         valid[0] = uint48(bytes6(userOp.paymasterAndData[72:72 + 6]));
         valid[1] = uint48(bytes6(userOp.paymasterAndData[84 - 6:84]));
 
+        // NOTE:::PLEASE NOTE prevents stack too deep error
+        // not using via-ir, not calling getHash() directly
         bytes32 hash = keccak256(
             abi.encode(
                 userOp.sender,
@@ -94,6 +124,7 @@ contract ModularPaymaster is BasePaymaster, IModularPaymaster {
 
         bytes memory signature = userOp.paymasterAndData[84:];
         Module memory moduleData = _modules[module];
+
         if (!moduleData.registered || module == address(0)) revert InvalidPaymasterData("module");
         uint256 gasCost = requiredPreFund + (41000 * userOp.maxFeePerGas);
         if (moduleData.balance < gasCost) revert InsufficientFunds(moduleData.balance, gasCost);
@@ -107,6 +138,7 @@ contract ModularPaymaster is BasePaymaster, IModularPaymaster {
             address vs1 = signature.validateOneSignature(hash);
             validationSuccess = vs1 == moduleData.manager;
         }
+
         context = abi.encodePacked(userOp.paymasterAndData[40:72], module, userOp.sender);
         validationResult = _packValidationData(!validationSuccess, valid[0], valid[1]);
     }

@@ -47,7 +47,7 @@ To ensure reliability, every module undergoes an attestation process:
 2. **Registration and Attestation**: Modules need to be registered and attested by trusted entities in [EAS](https://easscan.org/), for transparency and integrity.
 3. **Registration Fee**: A non-refundable registration fee is required.
 4. **Threshold Requirement**: Modules must meet a minimum threshold of attesters for acceptance.
-5. **Revocation Handling**: Modules can be rejected if any attestor revokes their attestation.
+5. **Revocation**: Modules can be rejected if any attestor revokes their attestation.
 6. **Safety Review**: Following attestation, a mandatory **1-DAY** delay occurs before module approval.
 
 # Getting Started

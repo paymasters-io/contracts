@@ -22,11 +22,11 @@ contract HumanVerifiedModule is BaseModule, Human {
     }
 
     function _validate(
-        bytes calldata paymasterAndData,
+        bytes calldata verificationData,
         address /** */
     ) internal view virtual override returns (bool) {
         (address signal, uint256 root, uint256 nullifierHash, uint256[8] memory proof) = abi.decode(
-            paymasterAndData,
+            verificationData,
             (address, uint256, uint256, uint256[8])
         );
         return humanityCheck(signal, root, nullifierHash, proof);

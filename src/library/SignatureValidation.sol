@@ -2,6 +2,7 @@
 pragma solidity 0.8.20;
 
 import {ECDSA} from "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
+import {MessageHashUtils} from "@openzeppelin/contracts/utils/cryptography/MessageHashUtils.sol";
 
 enum SigCount {
     ZERO,
@@ -54,7 +55,7 @@ library SignatureValidation {
         bytes32 _hash
     ) public pure returns (address signer) {
         if (total(_signature) != 1) revert InvalidSignatureLength();
-        signer = ECDSA.recover(_hash, _signature);
+        signer = ECDSA.recover(MessageHashUtils.toEthSignedMessageHash(_hash), _signature);
     }
 
     function validateTwoSignatures(
@@ -63,8 +64,8 @@ library SignatureValidation {
     ) public pure returns (address signer1, address signer2) {
         if (total(_signatures) != 2) revert InvalidSignatureLength();
         (bytes memory signature1, bytes memory signature2) = extractECDSASignatures(_signatures);
-        signer1 = ECDSA.recover(_hash, signature1);
-        signer2 = ECDSA.recover(_hash, signature2);
+        signer1 = ECDSA.recover(MessageHashUtils.toEthSignedMessageHash(_hash), signature1);
+        signer2 = ECDSA.recover(MessageHashUtils.toEthSignedMessageHash(_hash), signature2);
     }
 
     /// gets the total number of signatures passed to paymasterAndData

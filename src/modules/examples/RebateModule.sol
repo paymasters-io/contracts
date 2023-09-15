@@ -27,7 +27,7 @@ contract RebateModule is BaseModule {
     }
 
     function _validate(
-        bytes calldata /** paymasterAndData */,
+        bytes calldata /** verificationData */,
         address /** user */
     ) internal view virtual override returns (bool) {
         return true;

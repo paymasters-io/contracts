@@ -29,7 +29,7 @@ contract NFTGateModule is BaseModule {
     }
 
     function _validate(
-        bytes calldata /** paymasterAndData */,
+        bytes calldata /** verificationData */,
         address user
     ) internal view virtual override returns (bool) {
         return erc721Token.NFTGate(user);

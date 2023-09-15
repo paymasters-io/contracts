@@ -104,8 +104,8 @@ Deploy [scripts](https://book.getfoundry.sh/tutorials/solidity-scripting.html) h
 
 - rename `packages/*/.env.example` to `.env` and provide the required configurations
 - `PRIVATE_KEY`: keep this out of GitHub
-- `ETHERSCAN_API_KEY`: you can obtain this from [etherscan](https://etherscan.io)
-- `<CHAIN>_RPC_URL`: most of the chains are pre-filled with a free RPC provider URL.
+- `<CHAIN>SCAN_API_KEY`: you can obtain this from [EtherScan](https://etherscan.io). e.g `POLYGONSCAN_API_KEY`.
+- `<CHAIN>_RPC_URL`: most of the chains are pre-filled with a free RPC provider URL. e.g `BASE_RPC_URL`
 - Also, you need to hold some Testnet tokens in the chain you are deploying to.
 
 ### Deploying
@@ -124,15 +124,15 @@ make deploy-legacy chain=<chain symbol> contract=<contract name>
 pnpm deploy-legacy chain=<chain symbol> contract=<contract name>
 ```
 
-example: `make deploy chain=BSC contract=Paymaster`
+example: `make deploy chain=SEPOLIA contract=ModularPaymaster`
 
 This will run the following inside the specified target
 
 ```sh
-# eip1559 supported chains
-forge script script/${contract}.s.sol:Deploy${contract} --rpc-url $${$(CHAIN)_RPC_URL}  --private-key ${PRIVATE_KEY} --broadcast --verify --etherscan-api-key ${ETHERSCAN_API_KEY}  -vv
-# legacy chains
-forge script script/${contract}.s.sol:Deploy${contract} --rpc-url $${$(CHAIN)_RPC_URL}  --private-key ${PRIVATE_KEY} --broadcast --legacy  -vv
+# eip1559 supported chains e.g Sepolia
+forge script script/ModularPaymaster.s.sol:DeployModularPaymaster --rpc-url ${SEPOLIA_RPC_URL}  --private-key ${PRIVATE_KEY} --broadcast --verify --etherscan-api-key ${SEPOLIASCAN_API_KEY} -vv
+# legacy chains e.g Polygon
+forge script script/${contract}.s.sol:Deploy${contract} --rpc-url ${POLYGON_RPC_URL}  --private-key ${PRIVATE_KEY} --legacy --broadcast --verify --etherscan-api-key ${POLYGONSCAN_API_KEY} -vv
 ```
 
 ### Locally
@@ -151,13 +151,13 @@ This boots up a local blockchain for you with a test private key;
 make deploy-local contract=<contract name>
 ```
 
-example: `make deploy-local target=evm contract=PaymasterCore`
+example: `make deploy-local contract=PaymasterCore`
 
 ### Forks
 
-You can also deploy on a forked network
+You can also deploy on a forked network.
 
-- To start a forked network run:
+- To start a forked network, make sure the `RPC_URL` of the `chain` you want to fork is in `.env` then run:
 
 ```sh
 make fork chain=<chain symbol>

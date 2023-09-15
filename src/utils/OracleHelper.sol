@@ -17,7 +17,7 @@ abstract contract AbstractStore {
     uint192 ttl = 0;
     uint32 updateThreshold = 0;
 
-    mapping(IERC20Metadata => TokenInfo) _tokenInfo;
+    mapping(IERC20Metadata => TokenInfo) public _tokenInfo;
     mapping(IERC20Metadata => Cache) _cache;
 
     Oracle public oracle = Oracle.CHAINLINK;

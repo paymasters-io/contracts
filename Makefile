@@ -26,6 +26,12 @@ format :; @prettier --write src/**/*.sol && prettier --write src/**/**/*.sol
 
 lint :; @solhint src/**/*.sol && solhint src/*.sol
 
-deploy :; @forge script script/${contract}.s.sol:Deploy${contract}Script --rpc-url ${$(CHAIN)_RPC_URL}  --private-key ${PRIVATE_KEY} --broadcast --verify --etherscan-api-key ${ETHERSCAN_API_KEY} -vv
+local :; @anvil -m 'test test test test test test test test test test test junk'
 
-deploy-legacy :; @forge script script/${contract}.s.sol:Deploy${contract}Script --rpc-url ${$(CHAIN)_RPC_URL}  --private-key ${PRIVATE_KEY} --legacy --broadcast -vvv
+fork :; @anvil --fork-url ${$(chain)_RPC_URL} -m 'test test test test test test test test test test test junk'
+
+deploy :; @forge script script/${contract}.s.sol:Deploy${contract} --rpc-url ${$(chain)_RPC_URL}  --private-key ${PRIVATE_KEY} --broadcast --verify --etherscan-api-key ${$(chain)SCAN_API_KEY} -vv
+
+deploy-legacy :; @forge script script/${contract}.s.sol:Deploy${contract} --rpc-url ${$(chain)_RPC_URL}  --private-key ${PRIVATE_KEY} --legacy --broadcast --verify --etherscan-api-key ${$(chain)SCAN_API_KEY} -vv
+
+deploy-local:; @forge script script/${contract}.s.sol:Deploy${contract} --rpc-url http://127.0.0.1:8545 --private-key 0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80 -vvv

@@ -49,7 +49,7 @@ To ensure reliability, every module undergoes an attestation process:
 4. **Threshold Requirement**: Modules must meet a minimum threshold of attesters for acceptance.
 5. **Revocation**: Modules can be rejected if any attestor revokes their attestation.
 6. **Safety Review**: Following attestation, a mandatory **1-DAY** delay occurs before module approval.
-7. Mudules can skip the attestation process, if they are not handling post operations.
+7. Modules can skip the attestation process if they are not handling post operations.
 
 # Getting Started
 
